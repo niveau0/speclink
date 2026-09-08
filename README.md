@@ -1793,7 +1793,12 @@ var _ = spec.For[SubmitQuote](
 ### The checklist
 
 - Signature: `auth.Subject` first, `error` last. Always. Every use case can fail
-  authorisation, so the error is not optional.
+  authorisation, so the error is not optional. A streaming read is the one
+  exception to where the error sits, not to whether there is one: it returns
+  `iter.Seq2[T, error]` and nothing beside it, because a sequence decides nothing
+  until it is pulled and an error returned at hand-over time could only ever be
+  nil. Writing `(iter.Seq2[T, error], error)` gives the same failure two channels,
+  and a caller who checks the empty one believes it has checked.
 - The type lives in `uc_<snake_case_name>.go` and so does `New<Name>`, which
   returns `<Name>`.
 - The implementation consults the subject. Any of these counts:
@@ -2180,7 +2185,7 @@ is refused rather than accepted.
 | `K3-SUPERSEDED-COVERED` | `V6-003` | a superseded requirement is still being satisfied |
 | `K4-NO-GENERIC-CRUD` *(style)* | `V6-010`, `V6-011` | generic CRUD factory or its user interface |
 | `K5-UC-FILE` *(style)* | `V6-050` | use case not in the file the style names |
-| `K5-UC-SIGNATURE` *(style)* | `V6-051` | use case does not return `error` last |
+| `K5-UC-SIGNATURE` *(style)* | `V6-051` | use case returns neither `error` last nor a single `iter.Seq2[T, error]` |
 | `K5-UC-CONSTRUCTOR` *(style)* | `V6-052`, `V6-053`, `V6-054` | constructor missing, misplaced, or returns the wrong type; the name is the style's |
 | `K5-UC-AUTHZ` *(style)* | `V6-055` | nothing in the implementation looks like an authorisation check |
 | `K5-UC-PERMISSION` *(style)* | `V6-056`, `V6-057` | no permission of its own, or one declared but never used |

@@ -91,18 +91,31 @@ func (p *Package) checkUseCaseFile(uc useCase, style Style, out *diag.Set) {
 }
 
 // checkUseCaseSignature enforces the universal shape: subject first, error last.
+//
+// A streaming use case is the one exception, and only in where the error sits.
+// `func(auth.Subject, In) iter.Seq2[Out, error]` has no trailing error, and
+// asking for one would be asking for a second failure channel: authorisation
+// and everything else are decided when the sequence is pulled, not when it is
+// handed over, so the error beside it could only ever be nil. Two channels for
+// one fact is worse than one, because a caller can check the empty one and
+// believe it has checked.
 func (p *Package) checkUseCaseSignature(uc useCase, out *diag.Set) {
 	res := uc.sig.Results()
 	if res.Len() > 0 && isErrorType(res.At(res.Len()-1).Type()) {
 		return
 	}
+	if res.Len() == 1 {
+		if _, ok := errorSeqElem(res.At(0).Type()); ok {
+			return
+		}
+	}
 	out.Add(diag.Finding{
 		Code: diag.Code(diag.PhaseSemantic, 51),
 		Pos:  uc.pos,
 		Rule: RuleUCSignature,
-		What: "use case " + uc.name + " does not return an error as its last result.",
+		What: "use case " + uc.name + " reports no error: it neither returns one as its last result nor yields one from a sequence.",
 		Why:  "Every use case can fail authorisation, so the error is not optional. A signature without it forces callers to ignore the case that matters most.",
-		How:  "Change the signature to func(subject auth.Subject, …) (…, error).",
+		How:  "Change the signature to func(subject auth.Subject, …) (…, error), or to func(subject auth.Subject, …) iter.Seq2[…, error] if the result is streamed.",
 	})
 }
 

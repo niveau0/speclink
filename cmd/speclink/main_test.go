@@ -34,10 +34,13 @@ func TestInference(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("expected a clean run, got exit %d:\n%s", code, out)
 	}
-	// four use cases, two queries, one command, two events, three aggregates,
-	// one projection, two repositories, five permissions
-	if !strings.Contains(out, "19 constructs") {
-		t.Errorf("expected 19 recognised constructs, got:\n%s", out)
+	// four use cases, three queries, one command, two events, three
+	// aggregates, one projection, two repositories, six permissions. One of the
+	// queries streams: it returns an iter.Seq2 and no error beside it, and it is
+	// counted here so that a classifier reading a single result as a write is
+	// caught by the totals as well as by its own test.
+	if !strings.Contains(out, "21 constructs") {
+		t.Errorf("expected 21 recognised constructs, got:\n%s", out)
 	}
 }
 

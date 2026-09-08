@@ -28,7 +28,7 @@ func TestProcessGraphIsChecked(t *testing.T) {
 			// catch before the graph went to strings.
 			name: "an edge names a node that does not exist",
 			break_: func(t *testing.T, dir string) {
-				rewrite(t, dir, proc, `{From: "liste", To: "zusammen"},`, `{From: "liste", To: "zusamen"},`)
+				rewrite(t, dir, proc, `{From: "strom", To: "zusammen"},`, `{From: "strom", To: "zusamen"},`)
 			},
 			want: `has an edge to "zusamen", which is not a node of it`,
 		},
@@ -197,7 +197,7 @@ func TestProcessFigureAppearsOnlyWhereThereAreProcesses(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("the nago fixture did not verify:\n%s", out)
 	}
-	if !strings.Contains(out, "1 process (1 sound, 5 of 5 steps placed)") {
+	if !strings.Contains(out, "1 process (1 sound, 6 of 6 steps placed)") {
 		t.Errorf("the declared process is not counted:\n%s", summary(out))
 	}
 }
@@ -210,7 +210,10 @@ func TestWorkOutsideEveryProcessIsReported(t *testing.T) {
 	dir := copyFixture(t, "../../testdata/example")
 	rewrite(t, dir, "processes/quote.process.go", "\t\tspec.Do[sales.ListQuotes](\"liste\"),\n", "")
 	rewrite(t, dir, "processes/quote.process.go", "\t\t{From: \"aufteilen\", To: \"liste\"},\n", "")
-	rewrite(t, dir, "processes/quote.process.go", "\t\t{From: \"liste\", To: \"zusammen\"},\n", "")
+	// The branch outlives the step that was taken out of it: what followed the
+	// list now hangs off the fork directly, so the graph stays sound and the
+	// only thing the run has to report is the use case nobody placed.
+	rewrite(t, dir, "processes/quote.process.go", "\t\t{From: \"liste\", To: \"strom\"},\n", "\t\t{From: \"aufteilen\", To: \"strom\"},\n")
 
 	out, code := runVerify(t, dir)
 	if code == 0 {
@@ -221,7 +224,7 @@ func TestWorkOutsideEveryProcessIsReported(t *testing.T) {
 	}
 	// The figure is the honest half of the same statement: four of five, not a
 	// bare percentage with the denominator left off.
-	if !strings.Contains(out, "4 of 5 steps placed") {
+	if !strings.Contains(out, "5 of 6 steps placed") {
 		t.Errorf("the share of placed work did not move:\n%s", summary(out))
 	}
 }

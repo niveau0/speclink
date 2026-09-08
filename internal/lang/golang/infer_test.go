@@ -1,9 +1,12 @@
 package golang
 
 import (
+	"bytes"
 	"path/filepath"
 	"testing"
 
+	"github.com/worldiety/speclink/internal/config"
+	"github.com/worldiety/speclink/internal/diag"
 	"github.com/worldiety/speclink/internal/ir"
 )
 
@@ -128,5 +131,53 @@ func TestAggregateWithoutIdentity(t *testing.T) {
 	}
 	if kinds[0] != ConstructAggregate {
 		t.Errorf("the type an event folds into is an aggregate, got %v", kinds[0])
+	}
+}
+
+// TestStreamingUseCaseIsAQueryThatReportsErrors covers the shape a lazily
+// evaluated read has to take.
+//
+// `func(auth.Subject) iter.Seq2[Quote, error]` has no trailing error, and until
+// this was recognised it was wrong on both counts at once: the signature rule
+// demanded an error the type already carries, and the classifier read a use
+// case with a single result as a write. Asking for `(iter.Seq2[Quote, error],
+// error)` instead would have been asking for a failure channel that can only
+// ever be nil — a permission is audited when the sequence is pulled, not when
+// it is handed over — and a caller who checks the empty one believes it has
+// checked.
+func TestStreamingUseCaseIsAQueryThatReportsErrors(t *testing.T) {
+	root, err := filepath.Abs("../../../testdata/example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkgs, err := Load(root, "./...")
+	if err != nil {
+		t.Fatalf("load fixture: %v", err)
+	}
+
+	var kinds []ir.ConstructKind
+	for _, p := range pkgs {
+		for _, c := range p.Infer() {
+			if identOf(c.Name) == "StreamQuoteOverviews" {
+				kinds = append(kinds, c.Kind)
+			}
+		}
+	}
+	if len(kinds) != 1 {
+		t.Fatalf("expected the streaming use case to be recognised once, got %d", len(kinds))
+	}
+	if kinds[0] != ConstructQuery {
+		t.Errorf("a use case yielding a sequence reads; it was classified %v", kinds[0])
+	}
+
+	cfg := config.Config{ContextRoot: "app", CmdRoot: "cmd", InfraRoots: []string{"pkg", "foundation"}}
+	found := &diag.Set{}
+	CheckUseCases(pkgs, cfg, root, DDD1, ir.Waivers{}, found)
+	for _, f := range found.Findings() {
+		if f.Rule == RuleUCSignature {
+			var buf bytes.Buffer
+			_ = found.WriteText(&buf)
+			t.Fatalf("the sequence already carries the error, yet the signature rule fired:\n%s", buf.String())
+		}
 	}
 }

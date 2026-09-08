@@ -277,6 +277,15 @@ func isNagoSubject(t types.Type) bool {
 // data, a command returns only an error or a commit sequence.
 func isReadOnly(sig *types.Signature) bool {
 	res := sig.Results()
+	// A lazily evaluated read hands back an iter.Seq2[T, error] and nothing
+	// else: the sequence carries both the data and the failures, so there is
+	// one result rather than two. Falling through to the count below would
+	// file every such use case as a write, which is the opposite of what it is.
+	if res.Len() == 1 {
+		if _, ok := errorSeqElem(res.At(0).Type()); ok {
+			return true
+		}
+	}
 	if res.Len() < 2 {
 		return false
 	}
@@ -324,6 +333,41 @@ func isErrorType(t types.Type) bool {
 		return false
 	}
 	return named.Obj().Name() == "error" && named.Obj().Pkg() == nil
+}
+
+// errorSeqElem reports whether the type is an iter.Seq2[T, error] and returns
+// the element type T.
+//
+// A use case that streams reads its results lazily, and a permission check that
+// runs at the first pull cannot also have reported itself through a second
+// result at call time. The sequence is therefore the whole of the contract: it
+// yields the data and the failures, and there is no error beside it.
+//
+// The recognition is structural rather than by package path. iter.Seq2 is a
+// generic alias, and projects routinely name their own — `type Quotes =
+// iter.Seq2[Quote, error]` — so matching the "iter" path alone would miss the
+// forms that actually appear in a codebase, silently and without a finding.
+// What is checked is the shape that makes a range-over-func work: a function of
+// one parameter, that parameter being a yield of two values whose second is an
+// error.
+func errorSeqElem(t types.Type) (types.Type, bool) {
+	seq, ok := types.Unalias(t).Underlying().(*types.Signature)
+	if !ok || seq.Params().Len() != 1 || seq.Results().Len() != 0 {
+		return nil, false
+	}
+	yield, ok := types.Unalias(seq.Params().At(0).Type()).Underlying().(*types.Signature)
+	if !ok || yield.Params().Len() != 2 {
+		return nil, false
+	}
+	// The yield of a range-over-func answers whether the loop continues. A
+	// two-parameter function that answers nothing is some other callback.
+	if yield.Results().Len() != 1 || !types.Identical(yield.Results().At(0).Type(), types.Typ[types.Bool]) {
+		return nil, false
+	}
+	if !isErrorType(yield.Params().At(1).Type()) {
+		return nil, false
+	}
+	return yield.Params().At(0).Type(), true
 }
 
 // inferPermissions finds permission.Declare calls and binds each permission to

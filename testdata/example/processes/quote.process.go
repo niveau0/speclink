@@ -16,8 +16,9 @@ import (
 //
 // Three things in it are worth reading rather than skipping. The fork is a
 // genuine wait: the clerk is shown the customer overview and the list of quotes
-// before deciding, and the decision is not put until both are there. The
-// rework branch goes back to the submission, which is why this is a graph and
+// before deciding, and the decision is not put until both are there. The list
+// branch has two steps, because the rows are then streamed in as they arrive.
+// The rework branch goes back to the submission, which is why this is a graph and
 // not a list of steps. And the two ends are separate on purpose — approved and
 // withdrawn are different outcomes, and a process that modelled them as one
 // endpoint would have thrown away the distinction anybody cares about.
@@ -37,6 +38,7 @@ var PQuoteDecision = spec.Process{
 		spec.Fork("aufteilen"),
 		spec.Do[sales.FindQuoteOverview]("uebersicht"),
 		spec.Do[sales.ListQuotes]("liste"),
+		spec.Do[sales.StreamQuoteOverviews]("strom"),
 		spec.Join("zusammen"),
 
 		spec.Choice("pruefen"),
@@ -55,7 +57,8 @@ var PQuoteDecision = spec.Process{
 		{From: "aufteilen", To: "uebersicht"},
 		{From: "aufteilen", To: "liste"},
 		{From: "uebersicht", To: "zusammen"},
-		{From: "liste", To: "zusammen"},
+		{From: "liste", To: "strom"},
+		{From: "strom", To: "zusammen"},
 		{From: "zusammen", To: "pruefen"},
 
 		{From: "pruefen", To: "freigeben", When: "angenommen"},
