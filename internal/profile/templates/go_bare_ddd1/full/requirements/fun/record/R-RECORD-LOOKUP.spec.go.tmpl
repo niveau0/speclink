@@ -3,7 +3,7 @@ package record
 import "github.com/worldiety/speclink/spec"
 
 // RRecordLookup is the reason the read use case exists.
-var RRecordLookup = spec.Requirement{
+var RRecordLookup = spec.Declare(spec.Requirement{
 	ID:         "R-RECORD-LOOKUP",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -13,4 +13,4 @@ var RRecordLookup = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/{{.Context}}/overview.md", Anchor: "2-looking-up-a-record"},
 	},
-}
+})

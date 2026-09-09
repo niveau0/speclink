@@ -7,7 +7,7 @@ import (
 )
 
 // RDecInvoiceState fixes the persistence pattern of the invoicing context.
-var RDecInvoiceState = spec.Requirement{
+var RDecInvoiceState = spec.Declare(spec.Requirement{
 	ID:           "R-DEC-INVOICE-STATE",
 	Kind:         spec.Decision,
 	Discipline:   spec.Technical,
@@ -20,4 +20,4 @@ var RDecInvoiceState = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "14-rechnung"},
 	},
-}
+})

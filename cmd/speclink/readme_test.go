@@ -25,6 +25,7 @@ func TestReadmeListsEveryRule(t *testing.T) {
 	// Every rule ID the tool can emit, taken from the rule constants.
 	rules := []string{
 		"K1-CONSTRUCT-UNBOUND",
+		"K1-REQ-UNDECLARED",
 		"K10-REQ-CHANGED",
 		"K11-REQ-UNSOURCED",
 		"K11-SOURCE-UNANCHORED",

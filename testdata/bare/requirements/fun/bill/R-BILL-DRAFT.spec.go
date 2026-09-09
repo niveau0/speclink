@@ -4,7 +4,7 @@ package bill
 import "github.com/worldiety/speclink/spec"
 
 // RBillDraft is the reason the drafting use case exists.
-var RBillDraft = spec.Requirement{
+var RBillDraft = spec.Declare(spec.Requirement{
 	ID:         "R-BILL-DRAFT",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -14,4 +14,4 @@ var RBillDraft = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "14-rechnung"},
 	},
-}
+})

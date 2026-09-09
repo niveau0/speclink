@@ -3,7 +3,7 @@ package customer
 
 import "github.com/worldiety/speclink/spec"
 
-var RCustomerMasterdata = spec.Requirement{
+var RCustomerMasterdata = spec.Declare(spec.Requirement{
 	ID:         "R-CUSTOMER-MASTERDATA",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -14,4 +14,4 @@ var RCustomerMasterdata = spec.Requirement{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "2-kunde"},
 		{Doc: "requirements/_sources/sales/quotescreen.png", Anchor: "kundenfeld"},
 	},
-}
+})

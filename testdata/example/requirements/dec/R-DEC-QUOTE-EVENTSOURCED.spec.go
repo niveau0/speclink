@@ -4,7 +4,7 @@ import "github.com/worldiety/speclink/spec"
 
 // RDecQuoteEventSourced fixes the persistence pattern of the quotation write
 // side.
-var RDecQuoteEventSourced = spec.Requirement{
+var RDecQuoteEventSourced = spec.Declare(spec.Requirement{
 	ID:           "R-DEC-QUOTE-EVENTSOURCED",
 	Kind:         spec.Decision,
 	Discipline:   spec.Technical,
@@ -16,4 +16,4 @@ var RDecQuoteEventSourced = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "9-versand"},
 	},
-}
+})

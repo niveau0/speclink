@@ -2,7 +2,7 @@ package quote
 
 import "github.com/worldiety/speclink/spec"
 
-var RQuoteApprove = spec.Requirement{
+var RQuoteApprove = spec.Declare(spec.Requirement{
 	ID:         "R-QUOTE-APPROVE",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -12,4 +12,4 @@ var RQuoteApprove = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "9-versand"},
 	},
-}
+})

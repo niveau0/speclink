@@ -4,7 +4,7 @@ package quote
 import "github.com/worldiety/speclink/spec"
 
 // Prefix WRONG does not match the directory quote/.
-var RWrongPrefix = spec.Requirement{
+var RWrongPrefix = spec.Declare(spec.Requirement{
 	ID:         "R-WRONG-PREFIX",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -13,13 +13,13 @@ var RWrongPrefix = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/missing.md", Anchor: "nope"},
 	},
-}
+})
 
 // A decision without a rationale, in the wrong directory, with the wrong prefix.
-var RQuoteDecision = spec.Requirement{
+var RQuoteDecision = spec.Declare(spec.Requirement{
 	ID:         "R-QUOTE-DECISION",
 	Kind:       spec.Decision,
 	Discipline: spec.Technical,
 	Status:     spec.Normative,
 	Text:       "We decided something.",
-}
+})

@@ -7,7 +7,7 @@ import (
 )
 
 // RDecQuoteState fixes the persistence pattern of the quotation context.
-var RDecQuoteState = spec.Requirement{
+var RDecQuoteState = spec.Declare(spec.Requirement{
 	ID:           "R-DEC-QUOTE-STATE",
 	Kind:         spec.Decision,
 	Discipline:   spec.Technical,
@@ -21,4 +21,4 @@ var RDecQuoteState = spec.Requirement{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "13-ablage"},
 		{Doc: "requirements/_sources/vorgaben.standard.json", Anchor: "OPS-01"},
 	},
-}
+})

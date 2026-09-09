@@ -3,7 +3,7 @@ package dec
 
 import "github.com/worldiety/speclink/spec"
 
-var RDecNumbering = spec.Requirement{
+var RDecNumbering = spec.Declare(spec.Requirement{
 	ID:           "R-DEC-NUMBERING",
 	Kind:         spec.Decision,
 	Discipline:   spec.Technical,
@@ -15,4 +15,4 @@ var RDecNumbering = spec.Requirement{
 	Sources: []spec.Source{
 		{Extern: "GoBD Rz. 36"},
 	},
-}
+})

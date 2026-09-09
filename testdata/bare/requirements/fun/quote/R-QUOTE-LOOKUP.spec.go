@@ -7,7 +7,7 @@ import (
 )
 
 // RQuoteLookup is the reason the read use case exists.
-var RQuoteLookup = spec.Requirement{
+var RQuoteLookup = spec.Declare(spec.Requirement{
 	ID:         "R-QUOTE-LOOKUP",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -18,4 +18,4 @@ var RQuoteLookup = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "12-auskunft"},
 	},
-}
+})

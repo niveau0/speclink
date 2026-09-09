@@ -2,6 +2,7 @@ package golang
 
 import (
 	"go/ast"
+	"go/constant"
 	"go/token"
 	"go/types"
 
@@ -202,6 +203,10 @@ func (p *Package) checkExpr(e ast.Expr, kind fileKind, out *diag.Set) {
 	case *ast.FuncLit:
 		p.reject(x, "function literals", out)
 	case *ast.BinaryExpr:
+		if p.foldsToString(x) {
+			p.rejectConcatenation(x, out)
+			return
+		}
 		p.reject(x, "expressions", out)
 	default:
 		p.reject(e, "this construct", out)
@@ -215,6 +220,38 @@ func (p *Package) reject(e ast.Expr, what string, out *diag.Set) {
 		What: what + " are not permitted in annotation files.",
 		Why:  "The annotation language is closed and declarative (P4): it states what holds, not how it is computed. Anything computed would be invisible to the verifier.",
 		How:  "State the fact directly, or express the condition as a requirement of its own under requirements/ and bind it with spec.Satisfies(…).",
+	})
+}
+
+// foldsToString reports whether an expression is a constant of string type,
+// which is what a concatenation of two literals is.
+func (p *Package) foldsToString(e ast.Expr) bool {
+	tv, ok := p.pkg.TypesInfo.Types[e]
+	return ok && tv.Value != nil && tv.Value.Kind() == constant.String
+}
+
+// rejectConcatenation is the same refusal with the advice the author needs.
+//
+// Two string literals glued with + are the one expression the general answer is
+// useless for. "State the fact directly" is what the author was trying to do:
+// the fact is a paragraph, and the line got too long. The reason people reach
+// for + is that they do not know Go has a form for this, and the reason the
+// refusal stands anyway is not analysability — go/types folds this before
+// speclink ever sees it — but that a split sentence is no longer findable. The
+// half of a sentence that is searched for is never the half at the seam, and
+// grep for it comes back empty while the requirement sits right there.
+//
+// The raw string keeps the sentence whole. Its one trap is worth spending a
+// line on: the newline and the leading tabs of a continuation line are part of
+// the value, so the text continues in column 0 even though the literal is
+// indented.
+func (p *Package) rejectConcatenation(e ast.Expr, out *diag.Set) {
+	out.Add(diag.Finding{
+		Code: diag.Code(diag.PhaseWhitelist, 10),
+		Pos:  p.pos(e.Pos()),
+		What: "a text is assembled from several literals.",
+		Why:  "A sentence split across a + is no longer findable: grep for the words at the seam returns nothing, and the requirement is invisible to everyone who does not already know where it is.",
+		How:  "Write it as one raw string in backticks. Continuation lines start in column 0, because the indentation would otherwise be part of the text:\n\tText: `Eine Tätigkeit vermittelt mehrere Fertigkeiten gleichzeitig.\nWer acht Stunden an einer Anwendung arbeitet, hat …`,",
 	})
 }
 

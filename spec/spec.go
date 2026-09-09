@@ -91,6 +91,51 @@ const (
 	Superseded
 )
 
+// Disclosure classifies who a requirement may be shown to, on the scale an
+// information security management system uses.
+//
+// It exists because the catalogue is no longer only read by the team. A
+// requirement that reaches an end user through an assistant, a help page or a
+// support desk is disclosed, and somebody has to have decided that it may be.
+//
+// # Why the zero value is Public and not the safe end
+//
+// Every other enum in this package starts at iota + 1, so that the zero value
+// means "not stated" and can be reported as an omission. This one does not, and
+// the deviation is deliberate.
+//
+// A requirement says what the system must do. That is the thing the people
+// using it are entitled to know, and material that must not be seen has no
+// business being in a requirement in the first place — it belongs in the
+// document the requirement points at through [Source], which speclink never
+// copies. Reading silence as secrecy would make the catalogue mute on the day
+// the field is introduced, and the predictable answer to a mute catalogue is
+// somebody setting several hundred requirements to Public in one sitting
+// without reading any of them. A classification arrived at that way is worth
+// less than none, because it looks like a decision.
+//
+// So the default is the honest description of what these texts are, and the
+// field is for the exception.
+//
+// # What it does not do
+//
+// Nothing enforces it. speclink cannot check a disclosure decision, and it does
+// not filter its own output by it: the generated documentation still contains
+// every requirement, whatever it is classified as. The field states an intent
+// for the consumer that shows the text to somebody; it is not a control.
+type Disclosure int
+
+const (
+	// Public may be shown to anyone, including end users. The zero value.
+	Public Disclosure = iota
+	// Internal is for the organisation building or operating the system.
+	Internal
+	// Confidential is for a named circle within it.
+	Confidential
+	// Secret is disclosed individually and never in bulk.
+	Secret
+)
+
 // Role classifies accompanying material of a requirement.
 type Role int
 

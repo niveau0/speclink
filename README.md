@@ -692,7 +692,7 @@ package quote
 
 import "github.com/worldiety/speclink/spec"
 
-var RQuoteSubmit = spec.Requirement{
+var RQuoteSubmit = spec.Declare(spec.Requirement{
 	ID:         "R-QUOTE-SUBMIT",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -702,8 +702,12 @@ var RQuoteSubmit = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "8-abgabe"},
 	},
-}
+})
 ```
+
+`spec.Declare` returns its argument unchanged, so the variable still holds the
+requirement and is referenced as before. What it adds is the runtime catalogue —
+see [4.1a](#41a-requirements-at-run-time). It is required (`K1-REQ-UNDECLARED`).
 
 Field rules:
 
@@ -735,6 +739,71 @@ Field rules:
 - `DerivedFrom` and `Supersedes` reference other requirements by their **Go
   identifier**, never by the ID string, so moving a file never breaks a
   reference. Cycles in `DerivedFrom` are reported.
+- `Disclosure`: `Public`, `Internal`, `Confidential`, `Secret`. Unlike every
+  other enum here the zero value is not "unset" but `Public`, and that is
+  deliberate: a requirement says what the system must do, which is the thing its
+  users are entitled to know, and material that must not be seen belongs in the
+  document behind `Source` rather than in the requirement. Reading silence as
+  secrecy would make the catalogue mute on the day the field is introduced, and
+  the predictable answer to a mute catalogue is somebody classifying three
+  hundred requirements as public in one sitting without reading any of them.
+  Nothing enforces the field and speclink does not filter by it — including in
+  the generated document, which is a disclosure channel of its own. It states an
+  intent for whoever shows the text to somebody.
+
+A text longer than a line is a **raw string**, not a concatenation:
+
+```go
+	Rationale: `For master data the history is not evidence but noise: a corrected
+typo in a name is not a business event, and the address a quote was sent to is
+already carried by the quote.`,
+```
+
+Continuation lines begin in column 0, because the indentation would otherwise be
+part of the value. `"…" + "…"` is refused (`SPEC-V1-010`) — not because the
+verifier cannot see it, it folds the constant before reading it, but because a
+sentence cut at a seam cannot be found again: grep for the words either side of
+the `+` returns nothing while the requirement sits right there.
+
+### 4.1a Requirements at run time
+
+speclink reads the tree statically and needs no help doing so. The program built
+from that tree does. Go offers no reflection over package level variables, so an
+application that wants to say *why* it behaves as it does — a help text, an
+assistant answering a user, a support view — cannot enumerate its own
+requirements. Without a way to, every project writes a `go/ast` parser and a
+code generator over `requirements/**/*.spec.go`: a partial reimplementation of
+speclink's own frontend, once per project, each one subtly different.
+
+`spec.Declare` registers the requirement as it is initialised, and
+`spec.Requirements()` returns them, sorted by ID:
+
+```go
+for _, r := range spec.Requirements() {
+	fmt.Printf("%s (%s, %s): %s\n", r.ID, r.Kind, r.Status, r.Title)
+}
+```
+
+The enums answer `String()`, so a consumer does not write the same switch again,
+and they marshal to those names rather than to integers.
+
+Two properties are worth being precise about.
+
+**The registry is not a substitute.** `spec.Entries()` knows only requirements
+that something is *bound* to, and speclink demands a binding for `Normative`
+ones alone. A `Planned` or `Informative` requirement is deliberately bound to
+nothing. Read the catalogue out of the registry and an assistant answers "there
+is no such requirement" for it — a different and far worse statement than "not
+implemented yet".
+
+**The catalogue is this binary's, not the repository's.** Go initialises the
+package level variables of packages that are linked in, so a requirement package
+no `main` imports is simply absent. For a program explaining itself that is
+arguably the right set — it should speak about what it is — but it is not the
+whole tree. speclink does not check this: a monolith with several entry points
+has no reason to link every requirement into each of them, and a rule demanding
+it would produce nothing but waivers. A project that wants everything imports a
+package that pulls the tree in.
 
 ### 4.2 Annotation files: `<base>.annotation.go`
 
@@ -772,6 +841,7 @@ terms. Everything below is rejected:
 | positional fields in a struct literal (use `Field: value`) | `SPEC-V1-009` |
 | the address-of operator `&` | `SPEC-V1-011` |
 | function literals, binary expressions, any computation | `SPEC-V1-010` |
+| a text assembled with `+` instead of one raw string | `SPEC-V1-010` |
 
 An annotation file whose neighbour `<base>.go` does not exist is an orphan
 (`SPEC-V3-001`): rename it or delete it.
@@ -2184,6 +2254,7 @@ is refused rather than accepted.
 | `K3-ABSTRACT-COVERED` | `V6-002` | an abstract requirement was satisfied directly |
 | `K3-SUPERSEDED-COVERED` | `V6-003` | a superseded requirement is still being satisfied |
 | `K4-NO-GENERIC-CRUD` *(style)* | `V6-010`, `V6-011` | generic CRUD factory or its user interface |
+| `K1-REQ-UNDECLARED` | `V5-007` | a requirement is not declared through `spec.Declare` and never reaches the running program |
 | `K5-UC-FILE` *(style)* | `V6-050` | use case not in the file the style names |
 | `K5-UC-SIGNATURE` *(style)* | `V6-051` | use case returns neither `error` last nor a single `iter.Seq2[T, error]` |
 | `K5-UC-CONSTRUCTOR` *(style)* | `V6-052`, `V6-053`, `V6-054` | constructor missing, misplaced, or returns the wrong type; the name is the style's |
@@ -2303,7 +2374,8 @@ concern the requirement, not the code. The two exceptions are
 `K11-REQ-UNSOURCED` and `K11-SOURCE-UNANCHORED`, which are waivable because
 both can genuinely fail to hold. `V5-001` missing ID, `V5-002` missing
 Kind, `V5-003` missing Status, `V5-004` decision without rationale, `V5-005`
-missing Text, `V5-013` cycle in `DerivedFrom`, `V5-020` normative requirement
+missing Text, `V5-007` requirement not declared through `spec.Declare`,
+`V5-013` cycle in `DerivedFrom`, `V5-020` normative requirement
 without a source, `V5-021`/`V5-022` a source naming neither or both of
 `Doc`/`Extern`, `V5-023` source document missing or unsegmentable, `V5-025` the
 anchor names no segment of that document, `V5-027` a configured source root is

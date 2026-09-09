@@ -55,6 +55,9 @@ type Requirement struct {
 	Kind       Kind
 	Discipline Discipline
 	Status     Status
+	// Disclosure says who this text may be shown to. The zero value is
+	// [Public]; see the type for why the default is not the safe end.
+	Disclosure Disclosure
 	Title      string
 	Text       string
 	Detail     string // Markdown file in the attachment folder, optional

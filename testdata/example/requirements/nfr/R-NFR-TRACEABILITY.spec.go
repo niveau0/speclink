@@ -10,7 +10,7 @@ import "github.com/worldiety/speclink/spec"
 // evident: they are the audit trail, and they exist because somebody has to be
 // able to reconstruct afterwards what happened. Naming that requirement at each
 // of them is what keeps the answer available when it is needed.
-var RNfrTraceability = spec.Requirement{
+var RNfrTraceability = spec.Declare(spec.Requirement{
 	ID:         "R-NFR-TRACEABILITY",
 	Kind:       spec.NonFunctional,
 	Discipline: spec.Mixed,
@@ -20,4 +20,4 @@ var RNfrTraceability = spec.Requirement{
 	Sources: []spec.Source{
 		{Extern: "GoBD Rz. 36"},
 	},
-}
+})

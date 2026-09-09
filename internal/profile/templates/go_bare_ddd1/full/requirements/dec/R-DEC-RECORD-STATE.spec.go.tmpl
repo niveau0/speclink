@@ -5,7 +5,7 @@ package dec
 import "github.com/worldiety/speclink/spec"
 
 // RDecRecordState fixes the persistence pattern of this context.
-var RDecRecordState = spec.Requirement{
+var RDecRecordState = spec.Declare(spec.Requirement{
 	ID:           "R-DEC-RECORD-STATE",
 	Kind:         spec.Decision,
 	Discipline:   spec.Technical,
@@ -17,4 +17,4 @@ var RDecRecordState = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/{{.Context}}/overview.md", Anchor: "3-how-records-are-kept"},
 	},
-}
+})

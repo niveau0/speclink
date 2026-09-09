@@ -6,7 +6,7 @@ import (
 	"github.com/worldiety/speclink/spec"
 )
 
-var RQuoteSubmit = spec.Requirement{
+var RQuoteSubmit = spec.Declare(spec.Requirement{
 	ID:          "R-QUOTE-SUBMIT",
 	Kind:        spec.Functional,
 	Discipline:  spec.Business,
@@ -18,4 +18,4 @@ var RQuoteSubmit = spec.Requirement{
 		{Doc: "requirements/_sources/sales/quoteflow.md", Anchor: "8-abgabe"},
 		{Doc: "requirements/_sources/sales/quotescreen.png", Anchor: "abgabeknopf"},
 	},
-}
+})

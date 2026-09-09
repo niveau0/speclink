@@ -8,7 +8,7 @@ import (
 )
 
 // RQuoteSubmit is the reason the submission use case exists.
-var RQuoteSubmit = spec.Requirement{
+var RQuoteSubmit = spec.Declare(spec.Requirement{
 	ID:          "R-QUOTE-SUBMIT",
 	Kind:        spec.Functional,
 	Discipline:  spec.Business,
@@ -25,4 +25,4 @@ var RQuoteSubmit = spec.Requirement{
 		// count as answered.
 		{Doc: "requirements/_sources/vorgaben.standard.json", Anchor: "IAM-01"},
 	},
-}
+})

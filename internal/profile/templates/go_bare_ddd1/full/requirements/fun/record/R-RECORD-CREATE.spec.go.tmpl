@@ -8,7 +8,7 @@ package record
 import "github.com/worldiety/speclink/spec"
 
 // RRecordCreate is the reason the creation use case exists.
-var RRecordCreate = spec.Requirement{
+var RRecordCreate = spec.Declare(spec.Requirement{
 	ID:         "R-RECORD-CREATE",
 	Kind:       spec.Functional,
 	Discipline: spec.Business,
@@ -18,4 +18,4 @@ var RRecordCreate = spec.Requirement{
 	Sources: []spec.Source{
 		{Doc: "requirements/_sources/{{.Context}}/overview.md", Anchor: "1-creating-a-record"},
 	},
-}
+})

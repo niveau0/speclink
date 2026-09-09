@@ -10,6 +10,10 @@ import (
 	"github.com/worldiety/speclink/internal/ir"
 )
 
+// RuleReqUndeclared fires when a requirement is written as a bare literal and
+// therefore never reaches the runtime catalogue.
+const RuleReqUndeclared = "K1-REQ-UNDECLARED"
+
 // ReadRequirements extracts the requirement declarations of the package's
 // *.spec.go files.
 //
@@ -30,12 +34,19 @@ func (p *Package) ReadRequirements(out *diag.Set) []*ir.Requirement {
 				if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 {
 					continue
 				}
-				lit, ok := vs.Values[0].(*ast.CompositeLit)
+				lit, declared, ok := p.requirementLit(vs.Values[0])
 				if !ok {
 					continue
 				}
-				if !p.isSpecType(lit, "Requirement") {
-					continue
+				if !declared {
+					out.Add(diag.Finding{
+						Code: diag.Code(diag.PhaseResolve, 7),
+						Pos:  p.pos(vs.Pos()),
+						Rule: RuleReqUndeclared,
+						What: "requirement " + vs.Names[0].Name + " is not declared through spec.Declare.",
+						Why:  "A requirement that only speclink can see is unavailable to the program built from it. An application explaining itself — a help text, an assistant, a support view — cannot enumerate package level variables, so a requirement outside the runtime catalogue is one the running system cannot name.",
+						How:  "Wrap the literal: `var " + vs.Names[0].Name + " = spec.Declare(spec.Requirement{…})`.",
+					})
 				}
 				reqs = append(reqs, p.readRequirement(vs, lit, out))
 			}
@@ -94,6 +105,31 @@ func (p *Package) ReadTopics() []*ir.Topic {
 		}
 	}
 	return topics
+}
+
+// requirementLit finds the spec.Requirement literal a var is bound to, and
+// reports whether it is registered in the runtime catalogue.
+//
+// Both spellings are read, because the reader has to see the wrong one in order
+// to report it. Returning it as a requirement either way is deliberate: a
+// missing spec.Declare must produce one finding about the missing call, not a
+// second wave of findings about a requirement that suddenly covers nothing.
+func (p *Package) requirementLit(e ast.Expr) (lit *ast.CompositeLit, declared, ok bool) {
+	if call, isCall := e.(*ast.CallExpr); isCall {
+		if p.specFuncName(call.Fun) != "Declare" || len(call.Args) != 1 {
+			return nil, false, false
+		}
+		inner, isLit := call.Args[0].(*ast.CompositeLit)
+		if !isLit || !p.isSpecType(inner, "Requirement") {
+			return nil, false, false
+		}
+		return inner, true, true
+	}
+	lit, isLit := e.(*ast.CompositeLit)
+	if !isLit || !p.isSpecType(lit, "Requirement") {
+		return nil, false, false
+	}
+	return lit, false, true
 }
 
 // isSpecType reports whether a composite literal constructs speclink/spec.<name>.
