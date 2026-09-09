@@ -1,0 +1,30 @@
+// The tool, the catalogue it defines, and the fixtures that are read as if they
+// were target projects.
+//
+// This file is committed on purpose, against the usual advice, because without
+// it a clone builds the tool against the *published* spec rather than the one
+// beside it. The alternative — a replace in go.mod — is not available: `go
+// install .../cmd/speclink@version` refuses a module that carries one, and that
+// is the only way anybody gets this tool. A workspace is invisible to go
+// install, so it is the one mechanism that serves both.
+//
+// The fixtures are listed for a blunt reason: a workspace refuses to build a
+// module nested inside it that it does not know about, and every one of them is
+// a module because that is what a target project is. Their own replace
+// directives are still what the tests exercise, because a fixture is copied out
+// of the tree before it is verified, and a copy is outside this workspace.
+//
+// One command does not cover everything — a module is its own package pattern
+// either way:
+//
+//	go test ./... ./spec/...
+go 1.27.0
+
+use (
+	.
+	./spec
+	./testdata/arch
+	./testdata/bad
+	./testdata/bare
+	./testdata/example
+)

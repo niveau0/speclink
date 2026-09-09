@@ -23,8 +23,15 @@ profile.cov
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Go workspace file
-go.work
+# Go workspace file.
+#
+# go.work is committed here, which is the opposite of the usual advice, and the
+# reason is in the file itself: the tool and the spec module it depends on live
+# in one repository, and a replace directive — the normal way to wire that up —
+# makes "go install .../cmd/speclink@version" refuse the module outright. The
+# workspace does the same job and is invisible to go install.
+#
+# go.work.sum stays ignored: it is a local build artifact.
 go.work.sum
 
 # env file

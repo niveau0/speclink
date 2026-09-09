@@ -189,7 +189,13 @@ a second is never a breaking change. The binary name is derived from the module
 path rather than asked for, because a separate answer could contradict the
 import paths.
 
-The generated project depends on one module, and it is not this one:
+The tool itself is installed the ordinary way:
+
+```
+go install github.com/worldiety/speclink/cmd/speclink@latest
+```
+
+The generated project depends on one module, and it is not that one:
 
 ```
 go get github.com/worldiety/speclink/spec
@@ -2498,10 +2504,6 @@ Do not invoke or assume these; they do not exist:
   log. A type written through some other store is not part of the promised set.
 - any rule that checks a projection is not persisted, or that a repository is
   not reached from `ui*` beyond the existing import ban
-- `go install github.com/worldiety/speclink/cmd/speclink@latest`. The tool
-  requires `speclink/spec`, which is a module of its own and has no tag yet, and
-  the `replace` that resolves it locally is ignored by `go install pkg@version`.
-  Build from a clone until `spec/vX.Y.Z` exists and the requirement names it.
 - any filtering by `Disclosure`. The field records who a requirement may be
   shown to; nothing acts on it, and the generated document in particular
   contains every requirement whatever it says. It is an intent for the consumer
