@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/worldiety/i18n v0.0.0-20260303170444-ecc6fa6bdd7a
-	github.com/worldiety/speclink v0.0.0
+	github.com/worldiety/speclink/spec v0.0.0
 	go.wdy.de/nago v0.0.0-20260806113855-e82d2c34878e
 	golang.org/x/text v0.31.0
 )
@@ -20,4 +20,4 @@ require (
 	golang.org/x/sys v0.40.0 // indirect
 )
 
-replace github.com/worldiety/speclink => ../..
+replace github.com/worldiety/speclink/spec => ../../spec

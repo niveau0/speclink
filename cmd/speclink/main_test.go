@@ -423,8 +423,8 @@ func copyFixture(t *testing.T, src string) string {
 		t.Fatal(err)
 	}
 	fixed := strings.ReplaceAll(string(data),
-		"replace github.com/worldiety/speclink => ../..",
-		"replace github.com/worldiety/speclink => "+filepath.ToSlash(repo))
+		"replace github.com/worldiety/speclink/spec => ../../spec",
+		"replace github.com/worldiety/speclink/spec => "+filepath.ToSlash(filepath.Join(repo, "spec")))
 	if err := os.WriteFile(gomod, []byte(fixed), 0o644); err != nil {
 		t.Fatal(err)
 	}

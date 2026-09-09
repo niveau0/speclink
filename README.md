@@ -189,6 +189,20 @@ a second is never a breaking change. The binary name is derived from the module
 path rather than asked for, because a separate answer could contradict the
 import paths.
 
+The generated project depends on one module, and it is not this one:
+
+```
+go get github.com/worldiety/speclink/spec
+```
+
+`spec` is the directive catalogue — the package the requirement and annotation
+files import — and it carries nothing but the standard library. The tool around
+it is a compiler frontend and pulls in `golang.org/x/tools`, which has no
+business in the module graph of an application that only writes down what it
+promises. The two are released together from this repository, and the version
+skew between them is the one `DumpVersion` was always meant to cover: a project
+pins `spec`, while whoever runs `speclink` runs whatever binary they have.
+
 The generated project carries an `AGENTS.md` with its own working instructions,
 and no `speclink.lock`. The lock records what happened — tests that ran, shapes
 somebody approved — and a templated one would assert both without grounds. So
@@ -2484,6 +2498,14 @@ Do not invoke or assume these; they do not exist:
   log. A type written through some other store is not part of the promised set.
 - any rule that checks a projection is not persisted, or that a repository is
   not reached from `ui*` beyond the existing import ban
+- `go install github.com/worldiety/speclink/cmd/speclink@latest`. The tool
+  requires `speclink/spec`, which is a module of its own and has no tag yet, and
+  the `replace` that resolves it locally is ignored by `go install pkg@version`.
+  Build from a clone until `spec/vX.Y.Z` exists and the requirement names it.
+- any filtering by `Disclosure`. The field records who a requirement may be
+  shown to; nothing acts on it, and the generated document in particular
+  contains every requirement whatever it says. It is an intent for the consumer
+  that shows the text to somebody, not a control.
 
 ### Known blockers
 

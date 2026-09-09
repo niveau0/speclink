@@ -279,7 +279,7 @@ func renderTemplate(t *testing.T, profileName, template, module, context string)
 	if err != nil {
 		t.Fatal(err)
 	}
-	body = append(body, []byte("\nrequire github.com/worldiety/speclink v0.0.0\n\nreplace github.com/worldiety/speclink => "+root+"\n")...)
+	body = append(body, []byte("\nrequire github.com/worldiety/speclink/spec v0.0.0\n\nreplace github.com/worldiety/speclink/spec => "+filepath.Join(root, "spec")+"\n")...)
 	if err := os.WriteFile(path, body, 0o644); err != nil {
 		t.Fatal(err)
 	}
