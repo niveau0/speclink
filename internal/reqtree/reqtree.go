@@ -1,5 +1,5 @@
 // Package reqtree assembles the requirement tree and checks everything about it
-// that the Go compiler cannot: identity, layout consistency, the derivation
+// that the host compiler cannot: identity, layout consistency, the derivation
 // graph and the outer edge to the raw sources.
 //
 // The outer edge is the point of it. Inside a specification model references are
@@ -39,13 +39,13 @@ const (
 type Tree struct {
 	// ByID holds every requirement, keyed by its ID.
 	ByID map[string]*ir.Requirement
-	// byGoIdent maps the qualified Go identifier to the requirement, used to
+	// bySymbol maps the frontend resolved declaration symbol to the requirement, used to
 	// resolve DerivedFrom and Supersedes in the second pass.
-	byGoIdent map[string]*ir.Requirement
+	bySymbol map[string]*ir.Requirement
 	// topics are the declared themes, keyed by topic ID.
 	topics map[string]*ir.Topic
 
-	// byTopicIdent indexes the themes by the Go identifier that declares them,
+	// byTopicIdent indexes the themes by the declaration symbol that declares them,
 	// for the declarations outside the tree that name one.
 	byTopicIdent map[string]*ir.Topic
 
@@ -56,7 +56,7 @@ type Tree struct {
 }
 
 // Build performs the second pass: it indexes the collected declarations and
-// rewrites the Go identifier references of DerivedFrom and Supersedes into
+// rewrites the declaration symbol references of DerivedFrom and Supersedes into
 // requirement IDs.
 //
 // Collecting first and resolving afterwards is what makes forward references
@@ -64,9 +64,9 @@ type Tree struct {
 // before it is referenced.
 func Build(root string, reqs []*ir.Requirement, out *diag.Set) *Tree {
 	t := &Tree{
-		ByID:      make(map[string]*ir.Requirement, len(reqs)),
-		byGoIdent: make(map[string]*ir.Requirement, len(reqs)),
-		root:      root,
+		ByID:     make(map[string]*ir.Requirement, len(reqs)),
+		bySymbol: make(map[string]*ir.Requirement, len(reqs)),
+		root:     root,
 	}
 
 	for _, r := range reqs {
@@ -84,7 +84,7 @@ func Build(root string, reqs []*ir.Requirement, out *diag.Set) *Tree {
 			continue
 		}
 		t.ByID[r.ID] = r
-		t.byGoIdent[r.GoIdent] = r
+		t.bySymbol[r.Symbol] = r
 	}
 
 	for _, r := range t.ByID {
@@ -96,17 +96,17 @@ func Build(root string, reqs []*ir.Requirement, out *diag.Set) *Tree {
 	return t
 }
 
-// resolveRefs turns qualified Go identifiers into requirement IDs.
+// resolveRefs turns declaration symbols into requirement IDs.
 func (t *Tree) resolveRefs(from *ir.Requirement, refs []string, field string, out *diag.Set) []string {
 	if len(refs) == 0 {
 		return nil
 	}
 	ids := make([]string, 0, len(refs))
 	for _, ref := range refs {
-		target, ok := t.byGoIdent[ref]
+		target, ok := t.bySymbol[ref]
 		if !ok {
 			// Unreachable for a well formed build: an unknown identifier is a
-			// Go compile error long before speclink runs. It can only happen
+			// compile error long before speclink runs. It can only happen
 			// when the referenced package was not part of the load.
 			out.Add(diag.Finding{
 				Code: diag.Code(diag.PhaseResolve, 11),
@@ -333,11 +333,11 @@ func firstSegment(s string) string {
 	return s
 }
 
-// ByGoIdent resolves a qualified Go identifier to its requirement.
+// BySymbol resolves a declaration symbol to its requirement.
 //
-// Bindings record what the author wrote — a Go identifier — rather than an ID
+// Bindings record what the author wrote — a compiler checked reference — rather than an ID
 // string, so this is the lookup that turns a reference into a requirement.
-func (t *Tree) ByGoIdent(ident string) *ir.Requirement { return t.byGoIdent[ident] }
+func (t *Tree) BySymbol(ident string) *ir.Requirement { return t.bySymbol[ident] }
 
 // All returns every requirement, ordered by ID.
 func (t *Tree) All() []*ir.Requirement {

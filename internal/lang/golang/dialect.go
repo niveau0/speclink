@@ -57,6 +57,31 @@ func (Dialect) AnnotationFile(sourceFile string) string {
 
 func (Dialect) RequirementFile(id string) string { return id + RequirementSuffix }
 
+// Reference keeps the last package element, because a requirement is always
+// referenced through its package: the tree lives elsewhere than the code
+// binding to it. ".../requirements/fun/quote.RQuoteSubmit" -> "quote.RQuoteSubmit".
+func (Dialect) Reference(symbol string) string {
+	pkg, name, ok := cutLast(symbol, '.')
+	if !ok || name == "" {
+		return symbol
+	}
+	if _, short, ok := cutLast(pkg, '/'); ok {
+		return short + "." + name
+	}
+	return pkg + "." + name
+}
+
+func cutLast(s string, sep byte) (before, after string, ok bool) {
+	if i := strings.LastIndexByte(s, sep); i >= 0 {
+		return s[:i], s[i+1:], true
+	}
+	return s, "", false
+}
+
+func (Dialect) RecordEvidence() string { return "go test -json ./... | speclink evidence" }
+
+func (Dialect) StoredName(wire string) string { return "the json tag `json:\"" + wire + "\"`" }
+
 func (Dialect) Verify(ref string) string  { return "spec.Verified(t, " + ref + ")" }
 func (Dialect) Satisfy(ref string) string { return "spec.Satisfies(" + ref + ")" }
 func (Dialect) Waive(rule string) string  { return `spec.Waive("` + rule + `", …)` }

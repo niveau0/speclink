@@ -52,12 +52,12 @@ func TestTheNeutralCoreRunsOnJava(t *testing.T) {
 func TestBackwardCoverageReportsInJava(t *testing.T) {
 	out := &diag.Set{}
 	tree := reqtree.Build(t.TempDir(), []*ir.Requirement{{
-		ID:      "R-QUOTE-DISCOUNT",
-		GoIdent: "com.example.requirements.fun.quote.RQuoteDiscount",
-		Kind:    ir.Functional,
-		Status:  ir.Normative,
-		Text:    "A discount MUST be recorded with the quote it applies to.",
-		Pos:     ir.Position{File: "src/com/example/requirements/fun/quote/RQuoteDiscount.java", Line: 12},
+		ID:     "R-QUOTE-DISCOUNT",
+		Symbol: "com.example.requirements.fun.quote.RQuoteDiscount",
+		Kind:   ir.Functional,
+		Status: ir.Normative,
+		Text:   "A discount MUST be recorded with the quote it applies to.",
+		Pos:    ir.Position{File: "src/com/example/requirements/fun/quote/RQuoteDiscount.java", Line: 12},
 	}}, out)
 
 	check.CoverRequirements(tree, nil, nil, Dialect{}, out)

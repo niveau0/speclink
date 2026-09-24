@@ -41,8 +41,8 @@ func (p *Package) ReadProcesses(out *diag.Set) []*ir.Process {
 
 func (p *Package) readProcess(vs *ast.ValueSpec, lit *ast.CompositeLit, out *diag.Set) *ir.Process {
 	proc := &ir.Process{
-		GoIdent: p.PkgPath() + "." + vs.Names[0].Name,
-		Pos:     p.pos(vs.Pos()),
+		Symbol: p.PkgPath() + "." + vs.Names[0].Name,
+		Pos:    p.pos(vs.Pos()),
 	}
 
 	for _, el := range lit.Elts {

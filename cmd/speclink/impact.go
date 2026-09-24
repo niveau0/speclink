@@ -251,7 +251,7 @@ func (g *graph) fromFile(target string) traced {
 				continue
 			}
 			for _, ref := range a.Requirements {
-				r := g.tree.ByGoIdent(ref)
+				r := g.tree.BySymbol(ref)
 				if r == nil {
 					r = g.tree.ByID[ref]
 				}

@@ -278,7 +278,7 @@ func readModel(absRoot, cfgPath, prof string, patterns []string) (*specModel, er
 	if err != nil {
 		return nil, err
 	}
-	m.ver.Shown = check.Demonstrated(m.tree, m.ver, m.cov, measured, m.base, ir.CollectWaivers(bindings), discard)
+	m.ver.Shown = check.Demonstrated(m.tree, m.ver, m.cov, measured, m.base, ir.CollectWaivers(bindings), frontend.Dialect(), discard)
 	return m, nil
 }
 
@@ -1906,7 +1906,7 @@ func (m *specModel) refTo(n ir.ProcessNode) doc.Inline {
 func (m *specModel) satisfiedBy(p *ir.Process) []string {
 	var out []string
 	for _, ref := range p.Satisfies {
-		if r := m.tree.ByGoIdent(ref); r != nil {
+		if r := m.tree.BySymbol(ref); r != nil {
 			out = append(out, r.ID)
 		}
 	}
@@ -2047,7 +2047,7 @@ func (m *specModel) writeTopicEdge(d *doc.Doc, id string) {
 // filedUnder reports whether any of the Go identifiers names the given theme.
 func (m *specModel) filedUnder(refs []string, id string) bool {
 	for _, ref := range refs {
-		if top := m.tree.TopicByGoIdent(ref); top != nil && top.ID == id {
+		if top := m.tree.TopicBySymbol(ref); top != nil && top.ID == id {
 			return true
 		}
 	}

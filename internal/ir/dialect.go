@@ -32,9 +32,20 @@ type Dialect interface {
 	// RequirementFile names the file a requirement of this ID belongs in.
 	RequirementFile(id string) string
 
+	// Reference renders a requirement's declaration symbol the way it is
+	// written at a call site, so that a How line can be pasted. The symbol is
+	// the frontend's own spelling of a qualified name, and only the frontend
+	// knows how to take it apart: a slash and a dot in Go, dots on the JVM.
+	Reference(symbol string) string
 	// Verify spells the statement a test ends with to demonstrate a
-	// requirement. ref is the requirement as it is written at a call site.
+	// requirement. ref is the requirement as [Dialect.Reference] renders it.
 	Verify(ref string) string
+	// RecordEvidence spells how a run's test results are handed to speclink,
+	// which is a different artefact in every ecosystem.
+	RecordEvidence() string
+	// StoredName spells the annotation that fixes the name a field is stored
+	// under, for the fix that restores one.
+	StoredName(wire string) string
 	// Satisfy spells the assertion binding a construct to a requirement.
 	Satisfy(ref string) string
 	// Waive spells the escape hatch for one rule.

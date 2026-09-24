@@ -259,7 +259,7 @@ func checkRequirements(tree *reqtree.Tree, p *ir.Process, d ir.Dialect, out *dia
 		return
 	}
 	for _, ref := range p.Satisfies {
-		if tree.ByGoIdent(ref) != nil {
+		if tree.BySymbol(ref) != nil {
 			continue
 		}
 		out.Add(diag.Finding{

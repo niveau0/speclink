@@ -101,14 +101,14 @@ func render(t *testing.T, out *diag.Set) []byte {
 	return buf.Bytes()
 }
 
-func req(id, goIdent string, k ir.Kind, s ir.Status) *ir.Requirement {
+func req(id, symbol string, k ir.Kind, s ir.Status) *ir.Requirement {
 	return &ir.Requirement{
-		ID:      id,
-		GoIdent: goIdent,
-		Kind:    k,
-		Status:  s,
-		Text:    "text of " + id,
-		Pos:     ir.Position{File: "mem://" + id, Line: 1, Col: 1},
+		ID:     id,
+		Symbol: symbol,
+		Kind:   k,
+		Status: s,
+		Text:   "text of " + id,
+		Pos:    ir.Position{File: "mem://" + id, Line: 1, Col: 1},
 	}
 }
 

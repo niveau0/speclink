@@ -21,7 +21,7 @@ type SchemaType struct {
 	Pos    Position
 }
 
-// Field returns the field with the given Go name.
+// Field returns the field with the given source name.
 func (t SchemaType) Field(name string) (SchemaField, bool) {
 	for _, f := range t.Fields {
 		if f.Name == name {
@@ -33,7 +33,7 @@ func (t SchemaType) Field(name string) (SchemaField, bool) {
 
 // SchemaField is one serialised field.
 type SchemaField struct {
-	// Name is the Go field name. It is what a binding refers to, and it may
+	// Name is the field name in the source. It is what a binding refers to, and it may
 	// change without breaking anything as long as Wire stays put.
 	Name string
 	// Wire is the name the field carries in stored data.

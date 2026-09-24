@@ -26,7 +26,7 @@ import (
 type Phase string
 
 const (
-	// PhaseWhitelist rejects Go constructs that the annotation subset forbids.
+	// PhaseWhitelist rejects constructs that the annotation subset forbids.
 	PhaseWhitelist Phase = "V1"
 	// PhaseBinding checks that a binding attaches to a legal target.
 	PhaseBinding Phase = "V3"
@@ -38,8 +38,9 @@ const (
 	PhaseSemantic Phase = "V6"
 )
 
-// Phase V2 has no constant on purpose: it is the Go compilation itself. It runs
-// before speclink and its findings are produced by the Go compiler.
+// Phase V2 has no constant on purpose: it is the compilation of the
+// project itself. It runs before speclink and its findings are produced by the
+// host compiler.
 
 // Finding is a single diagnostic.
 //

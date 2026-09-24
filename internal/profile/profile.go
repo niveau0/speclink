@@ -100,16 +100,39 @@ type Profile struct {
 	// one thing this tool must never do.
 	Schemas bool
 
-	// Open builds the model. It takes the frontend's own arguments because
-	// loading is where the readers differ most and neither signature
-	// generalises without lying about the other.
-	Open func(root string, layout config.Config, patterns []string, withTests bool, out *diag.Set) (lang.Model, error)
+	// Open builds the model. Loading is where the readers differ most, so the
+	// request says what is wanted and each profile decides what that means for
+	// its reader.
+	Open func(req OpenRequest, out *diag.Set) (lang.Model, error)
 
 	// templates are the starting points init can write. A profile with none
 	// says so rather than failing obscurely: being able to judge a project and
 	// being able to start one are separate capabilities, and the second is the
 	// one that has to be written by hand for every style.
 	templates []Template
+}
+
+// OpenRequest is what a command asks of a frontend.
+//
+// It deliberately says nothing in the vocabulary of any one reader. A Go
+// package pattern, a directory of class files and a Cargo target are
+// different things, and a request spelled in one of them would make every
+// other frontend translate from a language it does not speak.
+type OpenRequest struct {
+	// Root is the absolute project root.
+	Root string
+	// Layout is the profile's conventions with the project's deviations
+	// applied, including the measured scope.
+	Layout config.Config
+	// Units narrows what is loaded, in the frontend's own notation. Empty
+	// means the whole project, which is what every command asks for except
+	// the one that reads the requirement tree alone; see lang.OnlyTree for
+	// why a narrowed load may only answer questions about what it read.
+	Units []string
+	// Tests asks the frontend to read the tests as well. It is separate
+	// because reading them is not free, and only the commands that ask a
+	// question about tests should pay for it.
+	Tests bool
 }
 
 var registry = map[string]*Profile{}

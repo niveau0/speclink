@@ -51,6 +51,7 @@ var (
 	_ lang.SyntaxChecker       = (*Model)(nil)
 	_ lang.ArchitectureChecker = (*Model)(nil)
 	_ lang.DomainScoper        = (*Model)(nil)
+	_ lang.ScopeReporter       = (*Model)(nil)
 )
 
 func (m *Model) Name() string        { return "go" }
@@ -279,3 +280,6 @@ func (m *Model) CheckArchitecture(out *diag.Set) {
 func (m *Model) DomainPackages() map[string]bool {
 	return DomainPackages(m.All, m.Layout, m.Root)
 }
+
+// SkippedUnits is the number of packages the configured scope left out.
+func (m *Model) SkippedUnits() int { return len(OutOfScope(m.All, m.Layout, m.Root)) }

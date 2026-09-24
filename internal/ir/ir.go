@@ -50,17 +50,29 @@ func (p Position) String() string {
 
 // TargetKind is the sort of construct a binding attaches to.
 //
-// Func, Var and Const are not chosen by the author. spec.ForDecl names a
-// declaration and the type checker decides which of the three it is, so the
+// The kinds are categories, not the declaration forms of one language. Each
+// frontend maps its own forms onto them and the rules only ever ask which
+// category a target is in.
+//
+// Func, Var and Const are not chosen by the author. The binding names a
+// declaration and the frontend decides which of the three it is, so the
 // annotation cannot disagree with the code.
 type TargetKind int
 
 const (
+	// TargetType is a named type: a struct, an interface, a class, a trait.
 	TargetType TargetKind = iota + 1
+	// TargetFunc is something callable: a function, a method, an associated
+	// function.
 	TargetFunc
+	// TargetVar is a mutable value at the top level of a unit.
 	TargetVar
+	// TargetConst is an immutable, statically known value.
 	TargetConst
+	// TargetField is one field of a type; Target.Field names it.
 	TargetField
+	// TargetPackage is a unit of code organisation as the frontend knows it:
+	// a Go package, a JVM package, a Rust module.
 	TargetPackage
 	// TargetProcess is a course of business rather than a place in the code.
 	//
@@ -97,8 +109,8 @@ func (k TargetKind) String() string {
 
 // Target names the construct a binding attaches to.
 //
-// Name is fully qualified, e.g. "example.com/m/sales.SubmitQuoteUC". Field is
-// set for TargetField only.
+// Name is fully qualified in the frontend's own spelling, e.g.
+// "example.com/m/sales.SubmitQuoteUC" in Go. Field is set for TargetField only.
 type Target struct {
 	Kind    TargetKind
 	Package string

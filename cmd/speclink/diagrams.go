@@ -151,7 +151,7 @@ func writeDiagram(dir, name, body string) error {
 func participantsByIdent(t ir.Topology) map[string]ir.Participant {
 	out := make(map[string]ir.Participant, len(t.Participants))
 	for _, p := range t.Participants {
-		out[p.GoIdent] = p
+		out[p.Symbol] = p
 	}
 	return out
 }

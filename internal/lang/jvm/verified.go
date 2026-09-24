@@ -11,6 +11,7 @@ import (
 
 	"github.com/worldiety/speclink/internal/diag"
 	"github.com/worldiety/speclink/internal/ir"
+	"github.com/worldiety/speclink/internal/lang"
 )
 
 // ReadVerifications collects the claims tests make about requirements.
@@ -70,6 +71,24 @@ func (r *Reader) ReadVerifications(out *diag.Set) []ir.Binding {
 // the same way. Anything else — a descriptor, a package alias — would be
 // something one side had and the other did not.
 func TestName(class, method string) string { return class + "#" + method }
+
+// Demonstrations joins the claims in the bytecode with the results in the
+// report.
+//
+// The join is on the name a report gives a test — the class, a hash, the method
+// — because that is the one spelling both sides have. A descriptor or a package
+// alias would be something one side knows and the other does not. Nothing is
+// read from the input: the report is already on disk.
+func (m *Model) Demonstrations(_ io.Reader, reqs lang.RequirementIndex) (map[string][]string, error) {
+	passed, errs := ReadTestReports(m.root, m.reports)
+	for _, e := range errs {
+		// A missing report directory is the whole of the answer, so it stops
+		// the command rather than producing an empty record. Recording nothing
+		// looks exactly like a suite in which nothing passed.
+		return nil, e
+	}
+	return Demonstrations(m.r.ReadVerifications(&diag.Set{}), passed, reqs), nil
+}
 
 // Verifications implements lang.VerificationReader.
 func (m *Model) Verifications(out *diag.Set) []ir.Binding { return m.r.ReadVerifications(out) }

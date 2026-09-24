@@ -66,7 +66,7 @@ func Messages(tree *reqtree.Tree, t ir.Topology, out *diag.Set) {
 		checkChannelForm(c, out)
 		payloads := map[string]bool{}
 		for _, m := range c.Messages {
-			carried[m.GoIdent] = true
+			carried[m.Symbol] = true
 			if m.PayloadType != "" {
 				payloads[m.PayloadType] = true
 			}
@@ -156,7 +156,7 @@ func checkMessage(tree *reqtree.Tree, c ir.Channel, m ir.Message, payloads map[s
 	}
 
 	for _, ref := range m.Satisfies {
-		if tree.ByGoIdent(ref) == nil {
+		if tree.BySymbol(ref) == nil {
 			out.Add(diag.Finding{
 				Code: diag.Code(diag.PhaseSemantic, 201),
 				Pos:  m.Pos,
@@ -180,7 +180,7 @@ func checkUncarried(t ir.Topology, carried map[string]bool, out *diag.Set) {
 	sort.Slice(declared, func(i, j int) bool { return declared[i].Pos.Less(declared[j].Pos) })
 
 	for _, m := range declared {
-		if carried[m.GoIdent] {
+		if carried[m.Symbol] {
 			continue
 		}
 		out.Add(diag.Finding{
@@ -200,7 +200,7 @@ func messageName(m ir.Message) string {
 	if m.PayloadType != "" {
 		return shortName(m.PayloadType)
 	}
-	return shortName(m.GoIdent)
+	return shortName(m.Symbol)
 }
 
 // MessageEvolution holds every recorded message to the shape it was recorded

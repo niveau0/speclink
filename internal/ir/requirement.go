@@ -155,8 +155,12 @@ type Attachment struct {
 // graph is assembled after all declarations have been collected, so forward
 // references are legal and order is irrelevant.
 type Requirement struct {
-	ID           string
-	GoIdent      string // qualified Go identifier, e.g. "…/requirements/fun/quote.RQuoteSubmit"
+	ID string
+	// Symbol is the declaration the frontend resolved, spelled the way that
+	// frontend qualifies names: "…/requirements/fun/quote.RQuoteSubmit" in Go,
+	// "com.example.requirements.fun.quote.RQuoteSubmit" on the JVM. The core
+	// only ever compares it for equality and never takes it apart.
+	Symbol       string
 	Kind         Kind
 	Discipline   Discipline
 	Status       Status
@@ -169,7 +173,7 @@ type Requirement struct {
 	Supersedes   []string
 	Sources      []Source
 	Attachments  []Attachment
-	// Topics holds qualified Go identifiers until they are resolved, then
+	// Topics holds declaration symbols until they are resolved, then
 	// topic IDs — the same two pass shape DerivedFrom uses, for the same
 	// reason: order of declaration must not matter.
 	Topics []string
@@ -179,7 +183,7 @@ type Requirement struct {
 // Topic is a theme requirements are grouped under, and a chapter.
 type Topic struct {
 	ID          string
-	GoIdent     string
+	Symbol      string
 	Title       string
 	Description string
 	Pos         Position

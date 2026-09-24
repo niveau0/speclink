@@ -17,7 +17,7 @@ const (
 	// RuleReqChanged fires when a requirement's text no longer matches what was
 	// recorded, while the constructs satisfying it were left alone.
 	//
-	// Everything about a satisfies link is checked by the Go compiler except
+	// Everything about a satisfies link is checked by the compiler except
 	// the only thing that matters: whether the code still does what the
 	// requirement now says. Rewrite the text of R-QUOTE-SUBMIT completely and
 	// the identifier is unchanged, every reference resolves, the coverage stays
@@ -77,7 +77,7 @@ func driftRequirements(tree *reqtree.Tree, cov Coverage, base *baseline.File, wa
 			Rule: RuleReqChanged,
 			Pos:  r.Pos,
 			What: "the text of " + r.ID + " changed since it was last recorded.",
-			Why: "Every reference to a requirement is checked by the Go compiler except the one thing that matters, which is whether the code still does what the requirement now says. The identifier did not change, so nothing else in this run has anything to report: " +
+			Why: "Every reference to a requirement is checked by the compiler except the one thing that matters, which is whether the code still does what the requirement now says. The identifier did not change, so nothing else in this run has anything to report: " +
 				satisfying(satisfiers) + " went on counting towards the coverage while the sentence it was written for was being rewritten.",
 			How: "Re-read " + list(satisfiers) + " against the new text, change what has to change, then run `speclink freeze` to record the wording that was reviewed.",
 		})

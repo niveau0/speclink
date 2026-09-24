@@ -109,7 +109,7 @@ func CoverVerification(tree *reqtree.Tree, verifications []ir.Binding, cov Cover
 			for _, ref := range a.Requirements {
 				r := requirementOf(tree, ref)
 				if r == nil {
-					// Unresolvable references are a Go compile error long
+					// Unresolvable references are a compile error long
 					// before speclink runs.
 					continue
 				}
@@ -144,7 +144,7 @@ func CoverVerification(tree *reqtree.Tree, verifications []ir.Binding, cov Cover
 			Pos:  r.Pos,
 			What: "no test demonstrates " + r.ID + ".",
 			Why:  "Coverage says code was written for this requirement. It has never said the code does what the requirement asks, and nothing else does either: the implementation and the tests come from the same place, and a review that samples will not find the one that is missing.",
-			How:  "Write a test and end it with " + d.Verify(callSiteName(r.GoIdent)) + ". If it cannot be demonstrated by a test, put " + d.Waive(RuleRequirementUnverified) + " with a reason on a construct that satisfies it: " + satisfierHint(r.ID, cov) + ".",
+			How:  "Write a test and end it with " + d.Verify(d.Reference(r.Symbol)) + ". If it cannot be demonstrated by a test, put " + d.Waive(RuleRequirementUnverified) + " with a reason on a construct that satisfies it: " + satisfierHint(r.ID, cov) + ".",
 		})
 	}
 	return v
@@ -173,7 +173,7 @@ func waivedForRequirement(id string, cov Coverage, rule string, waived ir.Waiver
 // A requirement with no claim at all is not reported twice. K14-REQ-UNVERIFIED
 // has already said the only thing worth saying about it, and a second finding
 // would only make the first one look like half of a bigger problem.
-func Demonstrated(tree *reqtree.Tree, v Verification, cov Coverage, measured map[string]bool, base *baseline.File, waived ir.Waivers, out *diag.Set) int {
+func Demonstrated(tree *reqtree.Tree, v Verification, cov Coverage, measured map[string]bool, base *baseline.File, waived ir.Waivers, d ir.Dialect, out *diag.Set) int {
 	// Counted down from what was claimed, not from the whole. Counting down
 	// from the whole reported a hundred percent demonstrated next to zero
 	// percent verified, because nothing claimed and therefore nothing was
@@ -203,7 +203,7 @@ func Demonstrated(tree *reqtree.Tree, v Verification, cov Coverage, measured map
 			Pos:  r.Pos,
 			What: staleWhat(claimants) + " " + r.ID + ", but no run has shown it.",
 			Why:  "A verification term writes its line when control reaches it, and only a passing test has its line recorded. So one of three things is true and the source cannot tell them apart: the call was never reached, the test failed before the end, or the requirement was rewritten after the last run and the evidence was against the old wording.",
-			How:  "Run the tests and hand the result over: go test -json ./... | speclink evidence. If they do not pass, that is the finding.",
+			How:  "Run the tests and hand the result over: " + d.RecordEvidence() + ". If they do not pass, that is the finding.",
 		})
 	}
 	return v.Verified - stale
@@ -214,31 +214,6 @@ func staleWhat(claimants []string) string {
 		return shortName(claimants[0]) + " claims"
 	}
 	return strconv.Itoa(len(claimants)) + " tests claim"
-}
-
-// callSiteName renders a requirement's Go identifier the way it is written at a
-// call site, so the How line can be pasted.
-//
-// It differs from shortName, which drops the package entirely: a requirement is
-// always referenced through its package, because the tree lives elsewhere than
-// the code binding to it.
-func callSiteName(goIdent string) string {
-	pkg, name := goIdent, ""
-	for i := len(goIdent) - 1; i >= 0; i-- {
-		if goIdent[i] == '.' {
-			pkg, name = goIdent[:i], goIdent[i+1:]
-			break
-		}
-	}
-	if name == "" {
-		return goIdent
-	}
-	for i := len(pkg) - 1; i >= 0; i-- {
-		if pkg[i] == '/' {
-			return pkg[i+1:] + "." + name
-		}
-	}
-	return pkg + "." + name
 }
 
 func dedupe(in []string) []string {

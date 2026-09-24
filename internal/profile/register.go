@@ -40,12 +40,9 @@ func init() {
 		Architecture: true,
 		Schemas:      true,
 
-		Open: func(root string, layout config.Config, patterns []string, withTests bool, out *diag.Set) (lang.Model, error) {
-			loader := golang.Load
-			if withTests {
-				loader = golang.LoadWithTests
-			}
-			loaded, err := loader(root, patterns...)
+		Open: func(req OpenRequest, out *diag.Set) (lang.Model, error) {
+			root, layout := req.Root, req.Layout
+			loaded, err := loadGo(req)
 			if err != nil {
 				return nil, err
 			}
@@ -107,12 +104,9 @@ func init() {
 			Dir: "templates/go_bare_ddd1/full",
 		}},
 
-		Open: func(root string, layout config.Config, patterns []string, withTests bool, out *diag.Set) (lang.Model, error) {
-			loader := golang.Load
-			if withTests {
-				loader = golang.LoadWithTests
-			}
-			loaded, err := loader(root, patterns...)
+		Open: func(req OpenRequest, out *diag.Set) (lang.Model, error) {
+			root, layout := req.Root, req.Layout
+			loaded, err := loadGo(req)
 			if err != nil {
 				return nil, err
 			}
@@ -157,7 +151,10 @@ func init() {
 		// that never ran must not read as one that came out clean.
 		Architecture: false,
 
-		Open: func(root string, layout config.Config, patterns []string, withTests bool, out *diag.Set) (lang.Model, error) {
+		Open: func(req OpenRequest, out *diag.Set) (lang.Model, error) {
+			// Units and Tests do not apply: class files are read whole, and
+			// the verification claims live in the same bytecode as the rest.
+			root, layout := req.Root, req.Layout
 			classes, errs := jvm.Load(root, layout.ClassRoots)
 			for _, e := range errs {
 				// A class file that cannot be read is reported and skipped.
@@ -170,9 +167,18 @@ func init() {
 				return nil, fmt.Errorf("no compiled classes found under %s; build the project first, or set classRoots in %s",
 					root, config.FileName)
 			}
-			return jvm.NewModel(jvm.NewReader(root, classes, layout.SourceCode, layout.SpecPackage)), nil
+			return jvm.NewModel(jvm.NewReader(root, classes, layout.SourceCode, layout.SpecPackage), root, layout.ReportRoots), nil
 		},
 	})
+}
+
+// loadGo loads what a request asks for. The units are Go package patterns,
+// and none means the whole module.
+func loadGo(req OpenRequest) ([]*golang.Package, error) {
+	if req.Tests {
+		return golang.LoadWithTests(req.Root, req.Units...)
+	}
+	return golang.Load(req.Root, req.Units...)
 }
 
 // buildBroken reports a failed compilation.
