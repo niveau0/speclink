@@ -2,11 +2,11 @@ package ir
 
 // Chapter is a place in the document filled with written prose.
 type Chapter struct {
-	ID      string
-	GoIdent string
-	Doc     string
-	At      Place
-	Pos     Position
+	ID     string
+	Symbol string
+	Doc    string
+	At     Place
+	Pos    Position
 }
 
 // Place names a point in the generated document. The values mirror spec.Place.

@@ -247,7 +247,7 @@ func verify(args []string) error {
 	check.Discriminators(schema, bindings, findings)
 	check.Drift(tree, docs, sourceDocs, cov, src, base, waived, findings)
 	if _, ok := model.(lang.VerificationReader); ok {
-		ver.Shown = check.Demonstrated(tree, ver, cov, measured, base, waived, findings)
+		ver.Shown = check.Demonstrated(tree, ver, cov, measured, base, waived, model.Dialect(), findings)
 	}
 
 	// K1: why the data is shaped the way it is, and forward coverage down to

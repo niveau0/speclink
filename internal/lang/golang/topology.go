@@ -51,9 +51,9 @@ func (p *Package) ReadTopology(out *diag.Set) ([]ir.Participant, []ir.Channel, [
 
 func (p *Package) readParticipant(kind ir.ParticipantKind, vs *ast.ValueSpec, lit *ast.CompositeLit) ir.Participant {
 	part := ir.Participant{
-		Kind:    kind,
-		GoIdent: p.PkgPath() + "." + vs.Names[0].Name,
-		Pos:     p.pos(vs.Pos()),
+		Kind:   kind,
+		Symbol: p.PkgPath() + "." + vs.Names[0].Name,
+		Pos:    p.pos(vs.Pos()),
 	}
 	for key, value := range p.fieldsOfLit(lit) {
 		switch key {
@@ -116,8 +116,8 @@ func (p *Package) readChannel(vs *ast.ValueSpec, lit *ast.CompositeLit) ir.Chann
 // readMessage reads one message declaration.
 func (p *Package) readMessage(vs *ast.ValueSpec, lit *ast.CompositeLit) ir.Message {
 	m := ir.Message{
-		GoIdent: p.PkgPath() + "." + vs.Names[0].Name,
-		Pos:     p.pos(vs.Pos()),
+		Symbol: p.PkgPath() + "." + vs.Names[0].Name,
+		Pos:    p.pos(vs.Pos()),
 	}
 	for key, value := range p.fieldsOfLit(lit) {
 		switch key {
@@ -226,7 +226,7 @@ func (m *Model) Topology(out *diag.Set) ir.Topology {
 func resolveMessages(t *ir.Topology, declared []ir.Message) {
 	byIdent := make(map[string]ir.Message, len(declared))
 	for _, m := range declared {
-		byIdent[m.GoIdent] = m
+		byIdent[m.Symbol] = m
 	}
 	for i := range t.Channels {
 		for _, ref := range t.Channels[i].MessageRefs {

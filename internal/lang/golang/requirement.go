@@ -79,8 +79,8 @@ func (p *Package) ReadTopics() []*ir.Topic {
 					continue
 				}
 				t := &ir.Topic{
-					GoIdent: p.PkgPath() + "." + vs.Names[0].Name,
-					Pos:     p.pos(vs.Pos()),
+					Symbol: p.PkgPath() + "." + vs.Names[0].Name,
+					Pos:    p.pos(vs.Pos()),
 				}
 				for _, el := range lit.Elts {
 					kv, ok := el.(*ast.KeyValueExpr)
@@ -148,8 +148,8 @@ func (p *Package) isSpecType(lit *ast.CompositeLit, name string) bool {
 
 func (p *Package) readRequirement(vs *ast.ValueSpec, lit *ast.CompositeLit, out *diag.Set) *ir.Requirement {
 	r := &ir.Requirement{
-		GoIdent: p.PkgPath() + "." + vs.Names[0].Name,
-		Pos:     p.pos(vs.Pos()),
+		Symbol: p.PkgPath() + "." + vs.Names[0].Name,
+		Pos:    p.pos(vs.Pos()),
 	}
 
 	for _, el := range lit.Elts {

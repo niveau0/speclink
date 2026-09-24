@@ -12,7 +12,7 @@ import (
 const RuleTopicDuplicate = "K19-TOPIC-DUPLICATE"
 
 // ResolveTopics indexes the declared themes and rewrites the references of
-// every requirement from Go identifiers into topic IDs.
+// every requirement from declaration symbols into topic IDs.
 //
 // The same second pass DerivedFrom goes through, and for the same reason: a
 // theme may be declared after the requirements that use it, and the order of
@@ -35,7 +35,7 @@ func (t *Tree) ResolveTopics(topics []*ir.Topic, out *diag.Set) {
 			continue
 		}
 		t.topics[top.ID] = top
-		byIdent[top.GoIdent] = top
+		byIdent[top.Symbol] = top
 	}
 
 	for _, id := range t.sortedIDs() {
@@ -46,7 +46,7 @@ func (t *Tree) ResolveTopics(topics []*ir.Topic, out *diag.Set) {
 			if !ok {
 				// Unreachable for a well formed build, exactly as the same
 				// case is for DerivedFrom: naming a topic that does not exist
-				// is a Go compile error long before speclink runs. It can only
+				// is a compile error long before speclink runs. It can only
 				// happen when the declaring package was not part of the load,
 				// which is a question about the patterns and not about the
 				// requirement — so it is phrased as one.
@@ -78,17 +78,17 @@ func (t *Tree) Topics() []*ir.Topic {
 // Topic resolves one theme by ID.
 func (t *Tree) Topic(id string) *ir.Topic { return t.topics[id] }
 
-// TopicByGoIdent resolves a theme by the qualified identifier that names it.
+// TopicBySymbol resolves a theme by the qualified identifier that names it.
 //
 // Declarations outside the requirement tree — a channel, a participant — name a
 // theme the way Go names it, because that is what the compiler checks. They
 // need the same lookup the requirements get, rather than a second index that
 // could disagree with this one.
-func (t *Tree) TopicByGoIdent(ident string) *ir.Topic { return t.byTopicIdent[ident] }
+func (t *Tree) TopicBySymbol(ident string) *ir.Topic { return t.byTopicIdent[ident] }
 
 func strconvQuote(s string) string { return `"` + s + `"` }
 
-// lastDotted renders a qualified Go identifier as the name a reader wrote.
+// lastDotted renders a declaration symbol as the name a reader wrote.
 func lastDotted(s string) string {
 	if i := strings.LastIndexByte(s, '.'); i >= 0 {
 		return s[i+1:]
@@ -105,7 +105,7 @@ const RuleTopicUnused = "K19-TOPIC-UNUSED"
 // theme nobody has covered — a theme is not an obligation — but an empty one is
 // a chapter heading with nothing under it, which reads as a part of the system
 // that was left out rather than as a heading somebody stopped using.
-// alsoUsed are the Go identifiers naming a theme from outside the requirement
+// alsoUsed are the declaration symbols naming a theme from outside the requirement
 // tree — a channel or a participant. They count as use, because a theme that
 // only groups the edge of the system is still a heading with something under
 // it, and reporting it as empty would push people to file requirements under it

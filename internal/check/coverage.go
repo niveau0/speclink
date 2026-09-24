@@ -89,7 +89,7 @@ func CoverRequirements(tree *reqtree.Tree, bindings []ir.Binding, measured map[s
 			for _, id := range a.Requirements {
 				r := requirementOf(tree, id)
 				if r == nil {
-					continue // unresolvable references are a Go compile error
+					continue // unresolvable references are a compile error
 				}
 				cov.BySatisfier[r.ID] = append(cov.BySatisfier[r.ID], b.Target)
 				checkSatisfiable(r, b, a, waived, d, out)
@@ -122,7 +122,7 @@ func CoverRequirements(tree *reqtree.Tree, bindings []ir.Binding, measured map[s
 			Rule: RuleRequirementUncovered,
 			What: "normative requirement " + r.ID + " is satisfied by no construct.",
 			Why:  "Backward coverage is what makes a forgotten requirement visible at all. A requirement nobody references appears nowhere and therefore breaks no test.",
-			How:  "Bind an implementing construct with " + d.Satisfy(shortIdent(r)) + ", or mark the requirement as " + d.Status("Planned") + ", " + d.Status("OutOfScope") + " or " + d.Status("Informative") + " if it is deliberately not implemented.",
+			How:  "Bind an implementing construct with " + d.Satisfy(d.Reference(r.Symbol)) + ", or mark the requirement as " + d.Status("Planned") + ", " + d.Status("OutOfScope") + " or " + d.Status("Informative") + " if it is deliberately not implemented.",
 		})
 	}
 	return cov
@@ -158,11 +158,11 @@ func checkSatisfiable(r *ir.Requirement, b ir.Binding, a ir.Assertion, waived ir
 	}
 }
 
-func requirementOf(tree *reqtree.Tree, goIdentOrID string) *ir.Requirement {
-	if r, ok := tree.ByID[goIdentOrID]; ok {
+func requirementOf(tree *reqtree.Tree, symbolOrID string) *ir.Requirement {
+	if r, ok := tree.ByID[symbolOrID]; ok {
 		return r
 	}
-	return tree.ByGoIdent(goIdentOrID)
+	return tree.BySymbol(symbolOrID)
 }
 
 func sortedIDs(tree *reqtree.Tree) []string {
@@ -172,25 +172,4 @@ func sortedIDs(tree *reqtree.Tree) []string {
 	}
 	sort.Strings(ids)
 	return ids
-}
-
-// shortIdent renders the Go identifier a caller would write, e.g.
-// "quote.RQuoteSubmit" rather than the fully qualified path.
-func shortIdent(r *ir.Requirement) string {
-	ident := r.GoIdent
-	slash := -1
-	dot := -1
-	for i := len(ident) - 1; i >= 0; i-- {
-		if ident[i] == '.' && dot < 0 {
-			dot = i
-		}
-		if ident[i] == '/' {
-			slash = i
-			break
-		}
-	}
-	if dot < 0 {
-		return ident
-	}
-	return ident[slash+1:]
 }

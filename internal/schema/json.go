@@ -28,7 +28,7 @@ type Restriction struct {
 
 // Shape is one structure to emit, with what is known about its top level.
 type Shape struct {
-	// Type is the qualified Go type that produced it.
+	// Type is the qualified source type that produced it.
 	Type string
 	// Shape is the grammar speclink writes.
 	Shape string

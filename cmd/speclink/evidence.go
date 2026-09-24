@@ -1,25 +1,18 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/worldiety/speclink/internal/baseline"
 	"github.com/worldiety/speclink/internal/check"
 	"github.com/worldiety/speclink/internal/config"
 	"github.com/worldiety/speclink/internal/diag"
 	"github.com/worldiety/speclink/internal/lang"
-	"github.com/worldiety/speclink/internal/lang/jvm"
-	"github.com/worldiety/speclink/internal/profile"
 	"github.com/worldiety/speclink/internal/reqtree"
-	"github.com/worldiety/speclink/spec"
 )
 
 // evidence records which tests actually demonstrated which requirements.
@@ -56,7 +49,7 @@ func evidence(args []string) error {
 	fs := flag.NewFlagSet("evidence", flag.ExitOnError)
 	root := fs.String("root", ".", "repository root, holding "+baseline.FileName)
 	cfgPath := fs.String("config", "", "layout configuration; defaults to "+config.FileName+" in the root")
-	in := fs.String("in", "", "`file` holding the output of \"go test -json\"; standard input by default")
+	in := fs.String("in", "", "`file` holding the test output the frontend reads, e.g. \"go test -json\"; standard input by default")
 	prof := fs.String("profile", "", "language, framework and architectural style; overrides "+config.FileName)
 	cover := fs.String("coverprofile", "", "`file` written by \"go test -coverprofile\"; records how much of each declaration a run executed")
 	dry := fs.Bool("n", false, "report what would be recorded, write nothing")
@@ -72,35 +65,29 @@ func evidence(args []string) error {
 	// the record is bound to the wording a test ran against, and the wording
 	// lives in the tree.
 	discard := &diag.Set{}
-	model, layout, p, err := open(absRoot, *cfgPath, *prof, fs.Args(), false)
+	model, _, p, err := open(absRoot, *cfgPath, *prof, fs.Args(), false)
 	if err != nil {
 		return err
 	}
-	_ = p
-	var (
-		demonstrated map[string][]string
-		err2         error
-	)
-	switch profileLanguage(*prof, layout) {
-	case profile.JVM:
-		demonstrated, err2 = jvmEvidence(absRoot, layout)
-	default:
-		source := io.Reader(os.Stdin)
-		if *in != "" {
-			f, openErr := os.Open(*in)
-			if openErr != nil {
-				return openErr
-			}
-			defer f.Close()
-			source = f
-		}
-		demonstrated, err2 = readTestOutput(source)
+	reader, ok := model.(lang.EvidenceReader)
+	if !ok {
+		return fmt.Errorf("profile %s reads no test results, so there is no evidence to record", p.Name)
 	}
-	if err2 != nil {
-		return err2
+	source := io.Reader(os.Stdin)
+	if *in != "" {
+		f, openErr := os.Open(*in)
+		if openErr != nil {
+			return openErr
+		}
+		defer f.Close()
+		source = f
 	}
 
 	tree := reqtree.Build(absRoot, model.Requirements(discard), discard)
+	demonstrated, err := reader.Demonstrations(source, treeLookup{tree})
+	if err != nil {
+		return err
+	}
 
 	base, err := baseline.Load(absRoot)
 	if err != nil {
@@ -144,148 +131,12 @@ func evidence(args []string) error {
 	return nil
 }
 
-// testEvent is the part of the `go test -json` stream this needs.
-type testEvent struct {
-	Action string `json:"Action"`
-	Test   string `json:"Test"`
-	Output string `json:"Output"`
-}
-
-// readTestOutput collects the requirements each passing test demonstrated.
-//
-// Attribution comes from the stream rather than from the line, which is why
-// spec.Verified writes through the test's own logger: go test tags every output
-// event with the test that produced it, and without that a record could not be
-// tied to a pass or a failure.
-func readTestOutput(r io.Reader) (map[string][]string, error) {
-	var (
-		claimed = map[string][]string{}
-		passed  = map[string]bool{}
-		seen    bool
-	)
-
-	s := bufio.NewScanner(r)
-	s.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
-	for s.Scan() {
-		var e testEvent
-		if err := json.Unmarshal(s.Bytes(), &e); err != nil {
-			// Not every line of the stream is ours to understand; a build
-			// failure prints plain text into it.
-			continue
-		}
-		seen = true
-
-		switch e.Action {
-		case "pass":
-			if e.Test != "" {
-				passed[e.Test] = true
-			}
-		case "output":
-			if e.Test == "" {
-				continue
-			}
-			ids, err := parseVerifiedLine(e.Output)
-			if err != nil {
-				return nil, err
-			}
-			claimed[e.Test] = append(claimed[e.Test], ids...)
-		}
-	}
-	if err := s.Err(); err != nil {
-		return nil, fmt.Errorf("read test output: %w", err)
-	}
-	if !seen {
-		return nil, errors.New(`no "go test -json" events on the input; pipe "go test -json ./..." into this command, or point -in at its output`)
-	}
-
-	out := map[string][]string{}
-	for test, ids := range claimed {
-		// A test that claimed something and then failed showed nothing. The
-		// claim is still in the source, so K14-VERIFICATION-STALE will report
-		// it; recording it here would make the failure invisible instead.
-		if !passed[test] {
-			continue
-		}
-		for _, id := range ids {
-			out[id] = appendUnique(out[id], test)
-		}
-	}
-	return out, nil
-}
-
-// parseVerifiedLine extracts the requirement IDs from one output line.
-//
-// The marker is looked for anywhere in the line, not at its start, because
-// testing prefixes its output with the file and line it came from.
-func parseVerifiedLine(line string) ([]string, error) {
-	i := strings.Index(line, spec.VerifiedMarker)
-	if i < 0 {
-		return nil, nil
-	}
-	payload := strings.TrimSpace(line[i+len(spec.VerifiedMarker):])
-
-	var record struct {
-		Version int      `json:"v"`
-		Reqs    []string `json:"reqs"`
-	}
-	if err := json.Unmarshal([]byte(payload), &record); err != nil {
-		return nil, fmt.Errorf("unreadable verification line %q: %w", payload, err)
-	}
-	// The project pins speclink/spec in its go.mod while the developer runs an
-	// arbitrary speclink binary, so this is one of the few places where genuine
-	// version skew is possible. Refusing is the only safe answer: recording
-	// nothing looks exactly like a test that was never written.
-	if record.Version != spec.VerifiedVersion {
-		return nil, fmt.Errorf("the tests were built against spec.Verified version %d, this speclink reads version %d; align the speclink/spec requirement in go.mod with the binary",
-			record.Version, spec.VerifiedVersion)
-	}
-	return record.Reqs, nil
-}
-
-func appendUnique(list []string, s string) []string {
-	for _, have := range list {
-		if have == s {
-			return list
-		}
-	}
-	return append(list, s)
-}
-
-// jvmEvidence joins the claims in the bytecode with the results in the report.
-//
-// The join is on the name a report gives a test — the class, a hash, the method
-// — because that is the one spelling both sides have. A descriptor or a package
-// alias would be something one side knows and the other does not.
-func jvmEvidence(root string, layout config.Config) (map[string][]string, error) {
-	classes, errs := jvm.Load(root, layout.ClassRoots)
-	for _, e := range errs {
-		fmt.Fprintln(os.Stderr, "  "+e.Error())
-	}
-	if len(classes) == 0 {
-		return nil, fmt.Errorf("no compiled classes found under %s; build the project first", root)
-	}
-
-	passed, reportErrs := jvm.ReadTestReports(root, layout.ReportRoots)
-	for _, e := range reportErrs {
-		// A missing report directory is the whole of the answer, so it stops
-		// the command rather than producing an empty record. Recording nothing
-		// looks exactly like a suite in which nothing passed.
-		return nil, e
-	}
-
-	discard := &diag.Set{}
-	r := jvm.NewReader(root, classes, layout.SourceCode, layout.SpecPackage)
-	tree := reqtree.Build(root, r.ReadRequirements(discard), discard)
-
-	return jvm.Demonstrations(r.ReadVerifications(discard), passed, treeLookup{tree}), nil
-}
-
-// treeLookup is the one question the frontend has to ask of the tree, narrowed
+// treeLookup is the one question a frontend has to ask of the tree, narrowed
 // so that it does not depend on the whole of it.
 type treeLookup struct{ tree *reqtree.Tree }
 
 func (t treeLookup) IDOf(ref string) (string, bool) {
-	if r := t.tree.ByGoIdent(ref); r != nil {
+	if r := t.tree.BySymbol(ref); r != nil {
 		return r.ID, true
 	}
 	if r := t.tree.ByID[ref]; r != nil {

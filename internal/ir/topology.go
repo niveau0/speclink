@@ -22,15 +22,15 @@ func (k ParticipantKind) String() string {
 
 // Participant is something outside the code that the system deals with.
 //
-// Satisfies and Topics hold qualified Go identifiers until they are resolved,
+// Satisfies and Topics hold declaration symbols until they are resolved,
 // the same two pass shape the requirements go through and for the same reason:
 // a theme may be declared after the participant that names it, and the order of
 // files must not decide what a drawing says.
 type Participant struct {
 	Kind ParticipantKind
-	// GoIdent is the declaration, so that something outside the topology can
+	// Symbol is the declaration, so that something outside the topology can
 	// name this participant in a form the compiler checks.
-	GoIdent   string
+	Symbol    string
 	ID        string
 	Name      string
 	Role      string
@@ -41,7 +41,7 @@ type Participant struct {
 
 // Channel is one way across a boundary.
 //
-// Satisfies holds qualified Go identifiers rather than requirement IDs, as
+// Satisfies holds declaration symbols rather than requirement IDs, as
 // every other declaration here does, so that resolution happens once
 // everything has been collected.
 type Channel struct {
@@ -58,7 +58,7 @@ type Channel struct {
 
 	// Envelope is the shape wrapping every message, nil where none was stated.
 	Envelope *WireShape
-	// Messages holds qualified Go identifiers until they are resolved, the
+	// Messages holds declaration symbols until they are resolved, the
 	// same two pass shape the requirements go through: a message may be
 	// declared after the channel that lists it.
 	MessageRefs []string
@@ -79,7 +79,7 @@ type Channel struct {
 // what no type can state: the direction, the moment, whether it may be sent
 // twice, and what answers it.
 type Message struct {
-	GoIdent string
+	Symbol string
 	// Payload is the shape that crosses, nil where the declaration named no
 	// type — which is a finding rather than an empty message.
 	Payload *WireShape

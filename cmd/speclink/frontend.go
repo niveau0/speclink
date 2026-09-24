@@ -9,7 +9,6 @@ import (
 	"github.com/worldiety/speclink/internal/config"
 	"github.com/worldiety/speclink/internal/diag"
 	"github.com/worldiety/speclink/internal/lang"
-	"github.com/worldiety/speclink/internal/lang/golang"
 	"github.com/worldiety/speclink/internal/profile"
 )
 
@@ -72,7 +71,7 @@ func read(root, cfgPath, override string, patterns []string, withTests, named bo
 	layout := declared.Over(p.Layout)
 
 	if named {
-		model, err := p.Open(root, layout, patterns, withTests, &diag.Set{})
+		model, err := p.Open(profile.OpenRequest{Root: root, Layout: layout, Units: patterns, Tests: withTests}, &diag.Set{})
 		if err != nil {
 			return nil, layout, p, err
 		}
@@ -105,14 +104,16 @@ func read(root, cfgPath, override string, patterns []string, withTests, named bo
 	}
 	layout.Scope = append(layout.Scope, scoped...)
 
-	model, err := p.Open(root, layout, []string{wholeModule}, withTests, &diag.Set{})
+	// No units: the whole project is loaded, whatever the frontend's notion
+	// of a whole project is.
+	model, err := p.Open(profile.OpenRequest{Root: root, Layout: layout, Tests: withTests}, &diag.Set{})
 	if err != nil {
 		return nil, layout, p, err
 	}
 	return model, layout, p, nil
 }
 
-// wholeModule is the only pattern the loader is ever given.
+// wholeModule is the pattern that asks for everything, and so narrows nothing.
 const wholeModule = "./..."
 
 // scopeFromPatterns turns command line package patterns into scope entries.
@@ -204,22 +205,8 @@ func reportCapabilities(m lang.Model, p *profile.Profile) {
 // asked rather than assumed. A frontend that has none skips nothing, and
 // reporting a zero is the truthful answer rather than a placeholder.
 func skippedPackages(m lang.Model) int {
-	if g, ok := m.(*golang.Model); ok {
-		return len(golang.OutOfScope(g.All, g.Layout, g.Root))
+	if r, ok := m.(lang.ScopeReporter); ok {
+		return r.SkippedUnits()
 	}
 	return 0
-}
-
-// profileLanguage returns which reader a run is using, for the few places that
-// still have to know — evidence, where a Go test stream and a JVM test report
-// are genuinely different artefacts and neither is a special case of the other.
-func profileLanguage(override string, layout config.Config) profile.Language {
-	name := layout.Profile
-	if override != "" {
-		name = override
-	}
-	if p, err := profile.Get(name); err == nil {
-		return p.Language
-	}
-	return profile.Go
 }

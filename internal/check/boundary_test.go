@@ -25,6 +25,12 @@ func TestNoHostLanguageInTheRules(t *testing.T) {
 		"spec.For", "spec.Satisfies", "spec.Waive", "spec.Draft",
 		"spec.Optional", "spec.Verified", "spec.ForField", "spec.ForDecl",
 		"var _ =", ".annotation.go", ".spec.go",
+		// The evidence command and the stored-name fix, which were Go until
+		// they moved behind the dialect.
+		"go test -json", `json:\"`,
+		// Other frontends' spellings, so that the rules do not learn Java or
+		// Rust in place of Go.
+		"@Satisfies", "@Verifies", "::",
 	}
 
 	for _, dir := range []string{".", "../reqtree", "../baseline", "../diag", "../source"} {
@@ -70,6 +76,31 @@ func TestRulesDoNotImportAFrontend(t *testing.T) {
 			}
 			if strings.Contains(string(data), "internal/lang/") {
 				t.Errorf("%s imports a language frontend", path)
+			}
+		}
+	}
+}
+
+// TestNoLanguageNamedIdentity keeps the declaration identity neutral. It was
+// called GoIdent for as long as there was one frontend, and carried Java class
+// names under that name once there were two.
+func TestNoLanguageNamedIdentity(t *testing.T) {
+	for _, dir := range []string{".", "../reqtree", "../baseline", "../diag", "../source", "../ir"} {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".go") || e.Name() == "boundary_test.go" {
+				continue
+			}
+			path := filepath.Join(dir, e.Name())
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(data), "GoIdent") {
+				t.Errorf("%s names the declaration identity after one language; it is ir Symbol", path)
 			}
 		}
 	}

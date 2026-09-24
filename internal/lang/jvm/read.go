@@ -65,7 +65,7 @@ func (r *Reader) ReadRequirements(out *diag.Set) []*ir.Requirement {
 		req := &ir.Requirement{
 			// The class is the identity a reference resolves to, the same role
 			// the qualified Go identifier plays in the other frontend.
-			GoIdent:   c.Name,
+			Symbol:    c.Name,
 			ID:        a.Values["id"].String(),
 			Title:     a.Values["title"].String(),
 			Text:      a.Values["text"].String(),
@@ -292,6 +292,16 @@ func ClassNameOf(id string) string {
 	}
 	return b.String()
 }
+
+// Reference is the simple class name, which is how a class literal is written
+// once it is imported.
+func (Dialect) Reference(symbol string) string { return simple(symbol) }
+
+func (Dialect) RecordEvidence() string {
+	return "run the test suite so that its reports are written, then speclink evidence"
+}
+
+func (Dialect) StoredName(wire string) string { return `@JsonProperty("` + wire + `")` }
 
 func (Dialect) Verify(ref string) string  { return "@Verifies(" + simple(ref) + ".class)" }
 func (Dialect) Satisfy(ref string) string { return "@Satisfies(" + simple(ref) + ".class)" }

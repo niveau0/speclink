@@ -188,7 +188,7 @@ func checkChannelRequirements(tree *reqtree.Tree, c ir.Channel, out *diag.Set) {
 		return
 	}
 	for _, ref := range c.Satisfies {
-		if tree.ByGoIdent(ref) == nil {
+		if tree.BySymbol(ref) == nil {
 			out.Add(diag.Finding{
 				Code: diag.Code(diag.PhaseSemantic, 92),
 				Pos:  c.Pos,
@@ -203,13 +203,13 @@ func checkChannelRequirements(tree *reqtree.Tree, c ir.Channel, out *diag.Set) {
 
 // checkTopicRefs reports a theme reference that resolves to nothing.
 //
-// The Go compiler already refuses a misspelled identifier, so this only fires
+// The compiler already refuses a misspelled identifier, so this only fires
 // where the declaring package was left out of the analysed patterns. Saying so
 // is worth a line: a reference that resolves to nothing looks like filing and
 // is not, and the drawing would quietly sit under no heading at all.
 func checkTopicRefs(tree *reqtree.Tree, refs []string, subject string, pos ir.Position, out *diag.Set) {
 	for _, ref := range refs {
-		if tree.TopicByGoIdent(ref) != nil {
+		if tree.TopicBySymbol(ref) != nil {
 			continue
 		}
 		out.Add(diag.Finding{
@@ -230,7 +230,7 @@ func checkParticipantRefs(tree *reqtree.Tree, p ir.Participant, out *diag.Set) {
 	subject := p.Kind.String() + " " + quote(p.ID)
 	checkTopicRefs(tree, p.Topics, subject, p.Pos, out)
 	for _, ref := range p.Satisfies {
-		if tree.ByGoIdent(ref) != nil {
+		if tree.BySymbol(ref) != nil {
 			continue
 		}
 		out.Add(diag.Finding{

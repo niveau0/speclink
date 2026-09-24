@@ -35,10 +35,13 @@ func (plainDialect) AnnotationFile(sourceFile string) string {
 
 func (plainDialect) RequirementFile(id string) string { return "the file of " + id }
 
-func (plainDialect) Verify(ref string) string  { return "a verification of " + ref }
-func (plainDialect) Satisfy(ref string) string { return "a reference to " + ref }
-func (plainDialect) Waive(rule string) string  { return "a waiver of " + rule }
-func (plainDialect) Term(name string) string   { return "the " + name + " term" }
+func (plainDialect) Reference(symbol string) string { return symbol }
+func (plainDialect) RecordEvidence() string         { return "a record of the test run" }
+func (plainDialect) StoredName(wire string) string  { return "the stored name " + wire }
+func (plainDialect) Verify(ref string) string       { return "a verification of " + ref }
+func (plainDialect) Satisfy(ref string) string      { return "a reference to " + ref }
+func (plainDialect) Waive(rule string) string       { return "a waiver of " + rule }
+func (plainDialect) Term(name string) string        { return "the " + name + " term" }
 
 func (plainDialect) Transition(event, state string) string {
 	return event + " leads to " + state

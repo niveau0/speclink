@@ -132,7 +132,7 @@ type ProcessEdge struct {
 
 // Process is a course of business written down as a graph.
 //
-// Satisfies holds qualified Go identifiers rather than requirement IDs, for the
+// Satisfies holds declaration symbols rather than requirement IDs, for the
 // same reason DerivedFrom does: the declarations are collected in one pass and
 // resolved in a second, which is what makes forward references legal and the
 // input order irrelevant.
@@ -149,9 +149,9 @@ type Process struct {
 	// Drawn says how the course is pictured. Mirrors spec.View.
 	Drawn View
 
-	// GoIdent is the declaration this came from, for diagnostics.
-	GoIdent string
-	Pos     Position
+	// Symbol is the declaration this came from, for diagnostics.
+	Symbol string
+	Pos    Position
 }
 
 // Node returns the node of this ID, and whether it exists.

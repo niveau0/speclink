@@ -17,7 +17,7 @@
 // # One mechanism, three edges
 //
 // The file started out recording persisted shapes and now records everything
-// the Go compiler cannot check. That is not scope creep but the same principle
+// the host compiler cannot check. That is not scope creep but the same principle
 // reaching its natural extent: a link speclink cannot re-derive from the
 // current source needs a record of what it used to mean, or a change to the far
 // end goes unreported while the link still resolves.
@@ -314,7 +314,7 @@ type Field struct {
 	Optional bool   `json:"optional,omitempty"`
 }
 
-// Field returns the promised field with the given Go name.
+// Field returns the promised field with the given source name.
 func (e Entry) Field(name string) (Field, bool) {
 	for _, f := range e.Fields {
 		if f.Name == name {

@@ -142,7 +142,7 @@ func run(t *testing.T, root string, waivers ir.Waivers, reqs ...*ir.Requirement)
 func cite(id, doc, anchor string) *ir.Requirement {
 	return &ir.Requirement{
 		ID:      id,
-		GoIdent: "m/q." + id,
+		Symbol:  "m/q." + id,
 		Kind:    ir.Functional,
 		Status:  ir.Normative,
 		Text:    "text of " + id,

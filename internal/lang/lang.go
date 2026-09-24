@@ -35,6 +35,8 @@
 package lang
 
 import (
+	"io"
+
 	"github.com/worldiety/speclink/internal/diag"
 	"github.com/worldiety/speclink/internal/ir"
 )
@@ -194,6 +196,40 @@ type ArchitectureChecker interface {
 // would teach people to switch the rule off.
 type DomainScoper interface {
 	DomainPackages() map[string]bool
+}
+
+// ScopeReporter is implemented by a frontend with a notion of units — packages,
+// modules — that can say how many of them the configured scope left out.
+//
+// A frontend without one skips nothing, and zero is then the truthful answer
+// rather than a placeholder. It is asked of the model rather than worked out
+// by the command, so that the command does not have to know which frontend it
+// is talking to.
+type ScopeReporter interface {
+	SkippedUnits() int
+}
+
+// EvidenceReader is implemented by a frontend that can say which tests passed
+// and which requirements each of them demonstrated.
+//
+// Where that comes from differs by ecosystem and neither form is a special
+// case of the other: Go writes a line from inside a test into the stream go
+// test -json produces, the JVM reads a claim from bytecode and joins it with
+// the report the build tool already wrote. So the command hands over what it
+// was given on its input, and the frontend decides whether to read it.
+//
+// The result maps a requirement ID to the tests that demonstrated it. Only
+// passing tests may appear: a test that claimed something and then failed
+// showed nothing.
+type EvidenceReader interface {
+	Demonstrations(in io.Reader, reqs RequirementIndex) (map[string][]string, error)
+}
+
+// RequirementIndex turns a reference, as a frontend read it, into a
+// requirement ID. It is the one question a frontend has to ask of the tree,
+// narrowed so that it does not depend on the whole of it.
+type RequirementIndex interface {
+	IDOf(ref string) (string, bool)
 }
 
 // Capabilities describes what a model turned out to be able to do.

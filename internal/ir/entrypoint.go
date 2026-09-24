@@ -13,9 +13,9 @@ package ir
 // import graph, which is very nearly the same thing. How it is invoked is a
 // guess, and is marked as one.
 type EntryPoint struct {
-	// Name is the binary, which for Go is the directory it lives in.
+	// Name is the binary. Each frontend says how it is named: for Go it is the directory it lives in.
 	Name string
-	// Package is the import path.
+	// Package is the frontend's identity of the unit that builds it, the import path in Go.
 	Package string
 	// Dir is the path relative to the module root.
 	Dir string

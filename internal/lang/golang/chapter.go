@@ -41,8 +41,8 @@ func (p *Package) ReadChapters(out *diag.Set) []*ir.Chapter {
 
 func (p *Package) readChapter(vs *ast.ValueSpec, lit *ast.CompositeLit, out *diag.Set) *ir.Chapter {
 	c := &ir.Chapter{
-		GoIdent: p.PkgPath() + "." + vs.Names[0].Name,
-		Pos:     p.pos(vs.Pos()),
+		Symbol: p.PkgPath() + "." + vs.Names[0].Name,
+		Pos:    p.pos(vs.Pos()),
 	}
 	var sawAt bool
 	for _, el := range lit.Elts {

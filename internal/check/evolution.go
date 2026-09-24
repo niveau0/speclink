@@ -193,8 +193,9 @@ func compare(t ir.SchemaType, e baseline.Entry, optional map[string]bool, waived
 	for _, f := range e.Fields {
 		cur, ok := t.Field(f.Name)
 		if !ok {
-			// A field may be renamed in Go without touching the wire, so a
-			// missing Go name is only a removal when the wire name is gone too.
+			// A field may be renamed in the code without touching the wire, so
+			// a missing field name is only a removal when the wire name is gone
+			// too.
 			if _, byWire := wireField(t, f.Wire); byWire {
 				continue
 			}
@@ -218,7 +219,7 @@ func compare(t ir.SchemaType, e baseline.Entry, optional map[string]bool, waived
 				Rule: RuleFieldRenamed,
 				What: "field " + f.Name + " of " + shortName(t.Name) + " changed its stored name from " + quote(f.Wire) + " to " + quote(cur.Wire) + ".",
 				Why:  "The stored name is how a value is found again. Renaming it makes every value written so far unreachable, while the code keeps compiling.",
-				How:  "Restore the json tag `json:\"" + f.Wire + "\"`. The Go field name may be changed freely; only the stored name is promised.",
+				How:  "Restore " + d.StoredName(f.Wire) + ". The field name in the code may be changed freely; only the stored name is promised.",
 			})
 		}
 		if cur.Shape != f.Shape && !waived.Has(t.Name+"."+f.Name, RuleFieldShape) {
